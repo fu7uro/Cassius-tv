@@ -527,9 +527,14 @@ app.get('/', (c) => {
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-8">
               <!-- Logo -->
-              <h1 class="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-red-600 to-gray-400 bg-clip-text text-transparent">
-                <i class="fas fa-tv mr-2 text-red-600"></i>Cassius TV
-              </h1>
+              <div class="flex items-center space-x-3">
+                <img src="https://ik.imagekit.io/futuro2025/IMG_8714.jpg?updatedAt=1763987329728" 
+                     alt="Cassius TV" 
+                     class="h-10 w-10 lg:h-12 lg:w-12 rounded-lg shadow-lg shadow-red-600/20">
+                <h1 class="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-red-600 to-gray-400 bg-clip-text text-transparent">
+                  Cassius TV
+                </h1>
+              </div>
               
               <!-- Nav Links -->
               <div class="hidden md:flex items-center space-x-6">
