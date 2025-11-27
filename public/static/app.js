@@ -401,13 +401,18 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       
       const formData = new FormData(form);
+      const selectedCategories = Array.from(form.category.selectedOptions).map(opt => opt.value);
+      
       const content = {
         title: formData.get('title'),
         type: formData.get('type'),
         stream_url: formData.get('stream_url'),
         poster_url: formData.get('poster_url'),
         overview: formData.get('overview'),
-        source: 'manual'
+        release_year: formData.get('release_year'),
+        genre: formData.get('tags'),
+        source: 'manual',
+        categories: selectedCategories
       };
       
       await addToLibrary(content);
@@ -415,3 +420,53 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+// Update poster preview
+function updatePosterPreview(url) {
+  const preview = document.getElementById('poster-preview');
+  if (!preview) return;
+  
+  if (url && url.startsWith('http')) {
+    preview.innerHTML = `<img src="${url}" alt="Poster" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\"fas fa-exclamation-triangle text-3xl text-red-600\"></i>'">`;
+  } else {
+    preview.innerHTML = '<i class="fas fa-image text-3xl text-gray-600"></i>';
+  }
+}
+
+// Auto-fill from URL (tries to extract title from URL)
+async function autofillFromURL() {
+  const urlInput = document.querySelector('input[name="stream_url"]');
+  if (!urlInput || !urlInput.value) {
+    showNotification('Please enter a URL first', 'warning');
+    return;
+  }
+  
+  const url = urlInput.value;
+  
+  // Try to extract title from URL patterns
+  let title = '';
+  
+  // Common patterns
+  if (url.includes('tubi.tv')) {
+    const match = url.match(/\/movies\/([^\/\?]+)/);
+    if (match) title = match[1].replace(/-/g, ' ');
+  } else if (url.includes('pluto.tv')) {
+    const match = url.match(/\/on-demand\/movies\/([^\/\?]+)/);
+    if (match) title = match[1].replace(/-/g, ' ');
+  } else if (url.includes('roku.com')) {
+    const match = url.match(/\/details\/([^\/\?]+)/);
+    if (match) title = match[1].replace(/-/g, ' ');
+  }
+  
+  if (title) {
+    // Capitalize words
+    title = title.replace(/\b\w/g, l => l.toUpperCase());
+    document.querySelector('input[name="title"]').value = title;
+    showNotification('Title extracted from URL', 'success');
+    
+    // Try to fetch metadata from TMDB
+    // This would require calling your backend API
+  } else {
+    showNotification('Could not extract title from URL', 'info');
+  }
+}

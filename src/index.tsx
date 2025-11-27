@@ -427,42 +427,61 @@ app.get('/', (c) => {
         
         <!-- Custom Styles -->
         <style>
-          /* Netflix-style dark theme */
+          /* Modern dark theme with red/silver aesthetic */
+          :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #f5f5f5;
+            --text-secondary: #c0c0c0;
+            --accent-red: #dc2626;
+            --accent-red-hover: #ef4444;
+            --accent-silver: #a1a1aa;
+            --accent-silver-bright: #d4d4d8;
+          }
+          
           body {
-            background: #141414;
-            color: #e5e5e5;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
           }
           
           /* Custom scrollbar */
           ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
           }
           
           ::-webkit-scrollbar-track {
-            background: #1a1a1a;
+            background: var(--bg-secondary);
+            border-radius: 5px;
           }
           
           ::-webkit-scrollbar-thumb {
-            background: #555;
-            border-radius: 4px;
+            background: linear-gradient(180deg, var(--accent-red), var(--accent-silver));
+            border-radius: 5px;
+            border: 2px solid var(--bg-secondary);
           }
           
           ::-webkit-scrollbar-thumb:hover {
-            background: #777;
+            background: linear-gradient(180deg, var(--accent-red-hover), var(--accent-silver-bright));
           }
           
           /* Content card hover effect */
           .content-card {
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            background: var(--bg-secondary);
+            border: 1px solid transparent;
           }
           
           .content-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.8);
+            transform: scale(1.05) translateY(-4px);
+            box-shadow: 
+              0 20px 40px rgba(220, 38, 38, 0.2),
+              0 0 0 1px var(--accent-red);
             z-index: 10;
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
           }
           
           /* Rating stars */
@@ -482,12 +501,13 @@ app.get('/', (c) => {
 
           /* Loading spinner */
           .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
+            border: 3px solid var(--accent-silver);
             border-radius: 50%;
-            border-top: 3px solid #e50914;
+            border-top: 3px solid var(--accent-red);
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
           }
           
           @keyframes spin {
@@ -503,12 +523,12 @@ app.get('/', (c) => {
     </head>
     <body>
         <!-- Navigation -->
-        <nav class="fixed top-0 left-0 right-0 bg-gradient-to-b from-black via-black/80 to-transparent z-50 px-4 lg:px-8 py-4">
+        <nav class="fixed top-0 left-0 right-0 bg-gradient-to-b from-black/95 via-black/80 to-transparent z-50 px-4 lg:px-8 py-4 backdrop-blur-sm">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-8">
               <!-- Logo -->
-              <h1 class="text-2xl lg:text-3xl font-bold text-red-600">
-                <i class="fas fa-tv mr-2"></i>Cassius TV
+              <h1 class="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-red-600 to-gray-400 bg-clip-text text-transparent">
+                <i class="fas fa-tv mr-2 text-red-600"></i>Cassius TV
               </h1>
               
               <!-- Nav Links -->
@@ -527,7 +547,7 @@ app.get('/', (c) => {
               </button>
               
               <!-- Generate Guide Button -->
-              <button onclick="generateGuide()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold transition flex items-center space-x-2">
+              <button onclick="generateGuide()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-4 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg hover:shadow-red-600/30">
                 <i class="fas fa-wand-magic-sparkles"></i>
                 <span class="hidden sm:inline">Generate Guide</span>
               </button>
@@ -554,16 +574,21 @@ app.get('/', (c) => {
           <div id="content-container">
             <!-- Hero Section -->
             <section class="mb-12 mt-8">
-              <div class="bg-gradient-to-r from-red-600/20 to-transparent rounded-xl p-8">
-                <h2 class="text-4xl font-bold mb-4">Welcome to Your Free Streaming Guide</h2>
-                <p class="text-xl text-gray-300 mb-6">Discover amazing free content tailored to your taste</p>
-                <div class="flex flex-wrap gap-4">
-                  <button onclick="generateGuide()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition">
-                    <i class="fas fa-play mr-2"></i>Get Started
-                  </button>
-                  <button onclick="showAddContent()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg font-semibold transition">
-                    <i class="fas fa-plus mr-2"></i>Add Content
-                  </button>
+              <div class="relative bg-gradient-to-br from-red-600/10 via-gray-900/50 to-gray-400/10 rounded-2xl p-8 border border-gray-800 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-red-600/5 to-transparent animate-pulse"></div>
+                <div class="relative z-10">
+                  <h2 class="text-4xl font-bold mb-4 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                    Welcome to Your Free Streaming Guide
+                  </h2>
+                  <p class="text-xl text-gray-300 mb-6">Discover amazing free content tailored to your taste</p>
+                  <div class="flex flex-wrap gap-4">
+                    <button onclick="generateGuide()" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-xl hover:shadow-red-600/40 hover:scale-105">
+                      <i class="fas fa-play mr-2"></i>Get Started
+                    </button>
+                    <button onclick="showAddContent()" class="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-xl hover:shadow-gray-600/40">
+                      <i class="fas fa-plus mr-2"></i>Add Content
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -599,54 +624,91 @@ app.get('/', (c) => {
         </main>
         
         <!-- Add Content Modal -->
-        <div id="add-content-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div class="bg-gray-900 rounded-xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h3 class="text-2xl font-bold mb-4">Add Custom Content</h3>
+        <div id="add-content-modal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div class="bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-800 shadow-2xl">
+            <h3 class="text-3xl font-bold mb-6 bg-gradient-to-r from-red-600 to-gray-400 bg-clip-text text-transparent">Add Custom Content</h3>
             <form id="add-content-form">
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Title *</label>
-                  <input type="text" name="title" required class="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Title *</label>
+                    <input type="text" name="title" required placeholder="e.g., The Shawshank Redemption" 
+                           class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent transition-all">
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Type *</label>
+                    <select name="type" required class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                      <option value="movie">🎬 Movie</option>
+                      <option value="tv">📺 TV Show</option>
+                      <option value="sports">🏈 Sports Event</option>
+                      <option value="documentary">📹 Documentary</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Stream URL *</label>
+                    <input type="url" name="stream_url" required placeholder="https://..." 
+                           class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Direct link to stream or player page</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Release Year</label>
+                    <input type="number" name="release_year" min="1900" max="2025" placeholder="2024"
+                           class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                  </div>
                 </div>
                 
-                <div>
-                  <label class="block text-sm font-medium mb-2">Type *</label>
-                  <select name="type" required class="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600">
-                    <option value="movie">Movie</option>
-                    <option value="tv">TV Show</option>
-                  </select>
+                <!-- Right Column -->
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Poster Image URL</label>
+                    <input type="url" name="poster_url" placeholder="https://imagekit.io/..." 
+                           onchange="updatePosterPreview(this.value)"
+                           class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                    <div id="poster-preview" class="mt-2 w-32 h-48 bg-gray-800 rounded-lg flex items-center justify-center border border-gray-700">
+                      <i class="fas fa-image text-3xl text-gray-600"></i>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Category *</label>
+                    <select name="category" required multiple size="4" class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                      <option value="">Loading categories...</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                  </div>
                 </div>
                 
-                <div>
-                  <label class="block text-sm font-medium mb-2">Stream URL *</label>
-                  <input type="url" name="stream_url" required class="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600">
+                <!-- Full Width Description -->
+                <div class="col-span-1 md:col-span-2">
+                  <label class="block text-sm font-medium mb-2 text-gray-300">Description</label>
+                  <textarea name="overview" rows="3" placeholder="Brief description or notes about this content..."
+                            class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"></textarea>
                 </div>
-                
-                <div>
-                  <label class="block text-sm font-medium mb-2">Poster Image URL</label>
-                  <input type="url" name="poster_url" class="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600">
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium mb-2">Description</label>
-                  <textarea name="overview" rows="3" class="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"></textarea>
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium mb-2">Category</label>
-                  <select name="category" class="w-full px-3 py-2 bg-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600">
-                    <option value="">Select Category...</option>
-                  </select>
+
+                <!-- Tags/Keywords -->
+                <div class="col-span-1 md:col-span-2">
+                  <label class="block text-sm font-medium mb-2 text-gray-300">Tags (comma separated)</label>
+                  <input type="text" name="tags" placeholder="action, thriller, must-watch, classic"
+                         class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
                 </div>
               </div>
               
-              <div class="flex justify-end space-x-4 mt-6">
-                <button type="button" onclick="closeAddContent()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
-                  Cancel
+              <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-800">
+                <button type="button" onclick="autofillFromURL()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition text-sm">
+                  <i class="fas fa-magic mr-2"></i>Auto-fill from URL
                 </button>
-                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition">
-                  Add to Library
-                </button>
+                <div class="flex space-x-4">
+                  <button type="button" onclick="closeAddContent()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition">
+                    Cancel
+                  </button>
+                  <button type="submit" class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 rounded-lg font-semibold transition-all shadow-lg hover:shadow-red-600/30">
+                    <i class="fas fa-save mr-2"></i>Add to Library
+                  </button>
+                </div>
               </div>
             </form>
           </div>

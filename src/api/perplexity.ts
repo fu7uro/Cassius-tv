@@ -89,28 +89,44 @@ export class PerplexityDiscovery {
    */
   private generateSmartQueries(context: any, preferences: any): string[] {
     const queries: string[] = [];
+    const year = new Date().getFullYear();
 
-    // Base query for free streaming
-    const baseQuery = 'free streaming available on Tubi Pluto Crackle Roku Plex Peacock';
+    // TIER 1: Primary free streaming services (highest priority)
+    const tier1Services = 'Plex Tubi Crackle "Roku Channel" "Pluto TV"';
+    
+    // TIER 2: Secondary free services
+    const tier2Services = 'Peacock-Free Freevee YouTube-Movies Vudu-Free Hoopla Kanopy';
 
-    // Genre-based queries
-    Array.from(context.favoriteGenres).forEach(genre => {
-      queries.push(`best ${genre} movies ${baseQuery} 2024`);
-      queries.push(`hidden gem ${genre} TV shows ${baseQuery}`);
+    // Build queries in priority order
+    
+    // 1. Check primary services for user's favorite content
+    if (context.highRatedTitles.length > 0) {
+      context.highRatedTitles.slice(0, 2).forEach((title: string) => {
+        queries.push(`"${title}" streaming free on ${tier1Services} watch now ${year}`);
+      });
+    }
+
+    // 2. Genre-specific searches on primary services
+    Array.from(context.favoriteGenres).slice(0, 2).forEach(genre => {
+      queries.push(`best ${genre} movies streaming free ${tier1Services} available now ${year}`);
+      queries.push(`underrated ${genre} TV shows free on ${tier1Services} hidden gems`);
     });
 
-    // Similar to high-rated content
-    context.highRatedTitles.slice(0, 3).forEach((title: string) => {
-      queries.push(`movies similar to ${title} ${baseQuery}`);
-    });
+    // 3. Similar content on any free service
+    if (context.highRatedTitles.length > 0) {
+      queries.push(`movies similar to ${context.highRatedTitles[0]} free streaming ${tier1Services} ${tier2Services}`);
+    }
 
-    // Trending content query
-    queries.push(`trending movies and shows ${baseQuery} ${new Date().getFullYear()}`);
+    // 4. Trending on free platforms
+    queries.push(`trending now free movies ${tier1Services} most watched ${year}`);
 
-    // Award-winning content
-    queries.push(`award winning movies ${baseQuery} critics choice`);
+    // 5. Fallback: Web search for free streams (last resort)
+    if (queries.length < 4) {
+      queries.push(`free movie streaming sites legal ${year} no subscription required`);
+      queries.push(`watch free TV shows online legally ${year} best sites`);
+    }
 
-    return queries.slice(0, 6); // Limit to 6 queries for efficiency
+    return queries.slice(0, 8); // Allow more queries for better coverage
   }
 
   /**
@@ -125,21 +141,39 @@ export class PerplexityDiscovery {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'pplx-7b-online', // Using online model for real-time data
+          model: 'pplx-70b-online', // Using larger model for better accuracy
           messages: [
             {
               role: 'system',
-              content: `You are a streaming content expert. Find FREE streaming movies and TV shows based on the query. 
-                       Return a JSON array with: title, type (movie/tv), streamUrl (if found), provider (Tubi/Pluto/etc).
-                       Focus ONLY on content that is currently available for FREE streaming.`
+              content: `You are an expert at finding FREE streaming content. Your task is to find movies and TV shows that are CURRENTLY available for free streaming.
+
+CRITICAL REQUIREMENTS:
+1. ONLY return content that is 100% FREE to watch (no trials, no subscriptions)
+2. Prioritize these services IN ORDER: Plex, Tubi, Crackle, Roku Channel, Pluto TV, Peacock Free, Freevee
+3. Include the DIRECT streaming URL when possible (not just the service name)
+4. Verify the content is actually available (not just listed)
+5. Take your time - accuracy is more important than speed
+
+Return a JSON array with EXACTLY this structure:
+[{
+  "title": "Exact Title",
+  "type": "movie" or "tv",
+  "streamUrl": "direct URL to watch (if available)",
+  "provider": "Service Name",
+  "confidence": 0.0 to 1.0 (how sure you are it's free and available)
+}]
+
+If you find a great match on a priority service, that's worth 10 mediocre matches elsewhere.`
             },
             {
               role: 'user',
-              content: query
+              content: `${query}
+
+Please search thoroughly and return the BEST free options available right now. Take your time to verify availability.`
             }
           ],
-          temperature: 0.7,
-          max_tokens: 1000,
+          temperature: 0.3, // Lower temperature for more consistent results
+          max_tokens: 2000, // More tokens for detailed responses
           stream: false
         })
       });
