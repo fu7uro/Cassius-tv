@@ -428,9 +428,12 @@ app.post('/api/discover', async (c) => {
         
         if (enriched) {
           // Merge Perplexity and TMDB data
+          // Use search URLs that actually work
+          const searchUrl = `https://tubitv.com/search?q=${encodeURIComponent(enriched.title)}`;
           return {
             ...enriched,
-            stream_url: item.streamUrl || enriched.stream_urls?.[0],
+            stream_url: searchUrl,
+            stream_urls: enriched.stream_urls || [searchUrl],
             source: 'recommendation'
           };
         }

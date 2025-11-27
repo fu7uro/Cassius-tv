@@ -205,9 +205,9 @@ function createContentCard(content, inLibrary = false) {
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <!-- Action buttons -->
             <div class="flex justify-between items-center mb-2">
-              <!-- Play button -->
-              <button onclick="playContent('${content.stream_url || ''}')" class="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition">
-                <i class="fas fa-play ml-1"></i>
+              <!-- Play button - Search on Tubi -->
+              <button onclick="playContent('${content.stream_url || ''}')" class="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition" title="Search on Tubi">
+                <i class="fas fa-search"></i>
               </button>
               
               <!-- Other actions -->
@@ -221,6 +221,11 @@ function createContentCard(content, inLibrary = false) {
                     <i class="fas fa-trash text-sm"></i>
                   </button>
                 `}
+                
+                <!-- Search All Sites -->
+                <button onclick="searchAllSites('${content.title}')" class="bg-green-600/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-green-500 transition" title="Search all sites">
+                  <i class="fas fa-globe text-sm"></i>
+                </button>
                 
                 <!-- iWebTV Cast -->
                 <button onclick="castToTV('${content.stream_url || ''}')" class="bg-blue-600/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-500 transition">
@@ -322,6 +327,27 @@ function playContent(url) {
   
   // Open stream URL in new tab
   window.open(url, '_blank');
+  showNotification('Opening search results - check if available!', 'info');
+}
+
+// Search on multiple free streaming sites
+function searchAllSites(title) {
+  const sites = [
+    `https://tubitv.com/search?q=${encodeURIComponent(title)}`,
+    `https://www.roku.com/whats-on/search/${encodeURIComponent(title)}`,
+    `https://pluto.tv/en/search?query=${encodeURIComponent(title)}`,
+    `https://www.crackle.com/search?q=${encodeURIComponent(title)}`,
+    `https://watch.plex.tv/search?query=${encodeURIComponent(title)}`
+  ];
+  
+  showNotification('Searching 5 free streaming sites...', 'info');
+  
+  // Open first site immediately, others with slight delay
+  sites.forEach((url, index) => {
+    setTimeout(() => {
+      window.open(url, '_blank');
+    }, index * 500);
+  });
 }
 
 function castToTV(url) {

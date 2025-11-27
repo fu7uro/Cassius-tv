@@ -215,37 +215,33 @@ export class TMDBClient {
    */
   private generateStreamUrls(title: string, providers: TMDBWatchProvider[]): string[] {
     const urls: string[] = [];
+    // Clean title for better search results
+    const cleanTitle = title.replace(/[^\w\s]/g, '').toLowerCase().replace(/\s+/g, '-');
     const searchTitle = encodeURIComponent(title);
 
+    // Always add primary free services with working search URLs
+    urls.push(`https://tubitv.com/search?q=${searchTitle}`);
+    urls.push(`https://www.roku.com/whats-on/search/${searchTitle}`);
+    urls.push(`https://pluto.tv/en/search?query=${searchTitle}`);
+    
+    // Provider-specific URLs if available
     providers.forEach(provider => {
       switch (provider.provider_name) {
         case 'Tubi TV':
-          urls.push(`https://tubitv.com/search/${searchTitle}`);
-          break;
-        case 'Pluto TV':
-          urls.push(`https://pluto.tv/search/details/${searchTitle}`);
+          // Tubi uses different URL structure
+          urls.push(`https://tubitv.com/search?q=${searchTitle}`);
           break;
         case 'The Roku Channel':
-          urls.push(`https://therokuchannel.roku.com/search/${searchTitle}`);
-          break;
-        case 'Crackle':
-          urls.push(`https://www.crackle.com/search/${searchTitle}`);
+          urls.push(`https://www.roku.com/whats-on/search/${searchTitle}`);
           break;
         case 'Plex':
           urls.push(`https://watch.plex.tv/search?query=${searchTitle}`);
           break;
-        case 'Peacock':
-          urls.push(`https://www.peacocktv.com/search?query=${searchTitle}`);
-          break;
       }
     });
 
-    // Add generic search URLs as fallback
-    if (urls.length === 0) {
-      urls.push(`https://www.justwatch.com/us/search?q=${searchTitle}`);
-    }
-
-    return urls;
+    // Dedupe URLs
+    return [...new Set(urls)];
   }
 }
 
