@@ -141,6 +141,7 @@ export class PerplexityDiscovery {
    * Search for content using Perplexity API
    */
   private async searchForContent(query: string): Promise<DiscoveredContent[]> {
+    console.log(`[Perplexity] Searching: ${query}`);
     try {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
@@ -149,7 +150,7 @@ export class PerplexityDiscovery {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'pplx-70b-online', // Using larger model for better accuracy
+          model: 'llama-3.1-sonar-large-128k-online', // Using current Perplexity model
           messages: [
             {
               role: 'system',
@@ -187,14 +188,19 @@ Please search thoroughly and return the BEST free options available right now. T
       });
 
       if (!response.ok) {
-        console.error('Perplexity API error:', response.status);
+        const errorText = await response.text();
+        console.error(`[Perplexity] API error ${response.status}:`, errorText);
         return [];
       }
 
       const data = await response.json();
+      console.log('[Perplexity] Response:', JSON.stringify(data).substring(0, 200));
       const content = data.choices?.[0]?.message?.content;
 
-      if (!content) return [];
+      if (!content) {
+        console.error('[Perplexity] No content in response');
+        return [];
+      }
 
       // Parse the response
       try {

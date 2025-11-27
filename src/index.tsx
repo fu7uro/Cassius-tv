@@ -292,6 +292,45 @@ app.post('/api/ratings', async (c) => {
   }
 })
 
+// Test Perplexity API directly
+app.get('/api/test-perplexity', async (c) => {
+  const { PERPLEXITY_API_KEY } = c.env
+  
+  if (!PERPLEXITY_API_KEY) {
+    return c.json({ error: 'No API key' }, 400)
+  }
+  
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'pplx-70b-online',
+        messages: [{
+          role: 'user',
+          content: 'Say "Hello from Perplexity!" if you can read this.'
+        }]
+      })
+    })
+    
+    const data = await response.json()
+    
+    return c.json({
+      status: response.status,
+      ok: response.ok,
+      data
+    })
+  } catch (error) {
+    return c.json({
+      error: 'Fetch failed',
+      message: error instanceof Error ? error.message : 'Unknown'
+    }, 500)
+  }
+})
+
 // Discover new content using Perplexity + TMDB
 app.post('/api/discover', async (c) => {
   const { DB, PERPLEXITY_API_KEY, TMDB_API_KEY } = c.env
@@ -343,14 +382,26 @@ app.post('/api/discover', async (c) => {
 
     // Discover content with Perplexity
     console.log('Discovering content with Perplexity...');
-    const discovered = await discoverContentWithPerplexity(
-      PERPLEXITY_API_KEY,
-      userLibrary,
-      ratings,
-      preferences
-    );
-
-    console.log(`Found ${discovered.length} potential items`);
+    console.log('Library size:', userLibrary.length);
+    console.log('Ratings count:', ratings.length);
+    
+    let discovered = [];
+    try {
+      discovered = await discoverContentWithPerplexity(
+        PERPLEXITY_API_KEY,
+        userLibrary,
+        ratings,
+        preferences
+      );
+      console.log(`Found ${discovered.length} potential items from Perplexity`);
+    } catch (perplexityError) {
+      console.error('Perplexity discovery error:', perplexityError);
+      return c.json({
+        error: 'Perplexity API error',
+        message: perplexityError instanceof Error ? perplexityError.message : 'Unknown error',
+        library_size: userLibrary.length
+      }, 500);
+    }
 
     // Enrich each discovered item with TMDB data
     const enrichmentPromises = discovered.map(async (item) => {
