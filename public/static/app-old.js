@@ -1,5 +1,5 @@
 // Cassius TV - Frontend Application
-// Version: 2.1 - Smart Two-Button Workflow Fixed
+// Version: 2.0 - Smart Two-Button Workflow
 // =====================================
 
 // Global state
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadLibrary();
   
   // Check if we should auto-generate guide
-  if (libraryContent.length === 0 && recommendations.length === 0) {
+  if (libraryContent.length === 0) {
     showWelcome();
   }
 });
@@ -31,21 +31,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadPreferences() {
   try {
     const response = await axios.get(`${API_BASE}/api/preferences`);
-    preferences = response.data.preferences;
+    preferences = response.data;
   } catch (error) {
     console.error('Failed to load preferences:', error);
-    // Use defaults
-    preferences = {
-      recommendations_per_type: 12,
-      auto_refresh: true
-    };
   }
 }
 
 async function loadCategories() {
   try {
     const response = await axios.get(`${API_BASE}/api/categories`);
-    categories = response.data.categories || [];
+    categories = response.data;
     updateCategorySelects();
   } catch (error) {
     console.error('Failed to load categories:', error);
@@ -237,27 +232,9 @@ function renderLibrary() {
 function createContentCard(content, inLibrary = false) {
   const posterUrl = content.poster_url || '/static/placeholder-poster.jpg';
   const typeIcon = content.type === 'movie' ? 'film' : 'tv';
-  const hasStreamUrl = content.stream_url && content.stream_url !== '' && content.stream_url !== 'null';
-  const contentId = content.id || `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   
   return `
-    <div class="content-card bg-gray-800 rounded-lg overflow-hidden group relative" data-content-id="${contentId}">
-      <!-- Status Badge -->
-      ${!inLibrary && !hasStreamUrl ? `
-        <div class="absolute top-2 left-2 z-10">
-          <span class="bg-yellow-600/90 text-xs px-2 py-1 rounded-full">
-            <i class="fas fa-search mr-1"></i>Needs URL
-          </span>
-        </div>
-      ` : ''}
-      ${inLibrary && hasStreamUrl ? `
-        <div class="absolute top-2 left-2 z-10">
-          <span class="bg-green-600/90 text-xs px-2 py-1 rounded-full">
-            <i class="fas fa-check mr-1"></i>Ready
-          </span>
-        </div>
-      ` : ''}
-      
+    <div class="content-card bg-gray-800 rounded-lg overflow-hidden group relative">
       <!-- Poster -->
       <div class="aspect-[2/3] bg-gray-700 relative">
         ${content.poster_url ? 
@@ -271,70 +248,50 @@ function createContentCard(content, inLibrary = false) {
         <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <!-- Action buttons -->
-            <div class="flex flex-col space-y-2">
+            <div class="flex justify-between items-center mb-2">
+              <!-- Play button - Search on Tubi -->
+              <button onclick="playContent('${content.stream_url || ''}')" class="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center hover:scale-110 transition" title="Search on Tubi">
+                <i class="fas fa-search"></i>
+              </button>
               
-              <!-- Primary Actions Row -->
-              <div class="flex justify-center space-x-2">
-                <!-- Search for Stream -->
-                <button onclick="searchForStream('${content.title}')" class="bg-red-600 text-white rounded-lg px-3 py-2 flex items-center hover:bg-red-700 transition text-sm font-semibold">
-                  <i class="fas fa-search mr-1"></i>
-                  Find Stream
-                </button>
-                
-                <!-- Add URL (for recommendations) or Play (for library items with URL) -->
+              <!-- Other actions -->
+              <div class="flex space-x-2">
                 ${!inLibrary ? `
-                  <button onclick="promptForStreamUrl(${JSON.stringify(content).replace(/"/g, '&quot;')})" class="bg-green-600 text-white rounded-lg px-3 py-2 flex items-center hover:bg-green-700 transition text-sm font-semibold">
-                    <i class="fas fa-link mr-1"></i>
-                    Add URL
-                  </button>
-                ` : hasStreamUrl ? `
-                  <button onclick="playContent('${content.stream_url}')" class="bg-green-600 text-white rounded-lg px-3 py-2 flex items-center hover:bg-green-700 transition text-sm font-semibold">
-                    <i class="fas fa-play mr-1"></i>
-                    Play
+                  <button onclick="addToLibrary(${JSON.stringify(content).replace(/"/g, '&quot;')})" class="bg-gray-700/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-600 transition">
+                    <i class="fas fa-plus text-sm"></i>
                   </button>
                 ` : `
-                  <button onclick="promptForStreamUrl(${JSON.stringify(content).replace(/"/g, '&quot;')})" class="bg-yellow-600 text-white rounded-lg px-3 py-2 flex items-center hover:bg-yellow-700 transition text-sm font-semibold">
-                    <i class="fas fa-link mr-1"></i>
-                    Add URL
-                  </button>
-                `}
-              </div>
-              
-              <!-- Secondary Actions Row -->
-              <div class="flex justify-center space-x-2">
-                ${!inLibrary ? `
-                  <button onclick="addToLibrary(${JSON.stringify(content).replace(/"/g, '&quot;')})" class="bg-gray-700/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-gray-600 transition" title="Save to Library">
-                    <i class="fas fa-bookmark text-sm"></i>
-                  </button>
-                ` : `
-                  <button onclick="removeFromLibrary(${content.id})" class="bg-gray-700/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition" title="Remove from Library">
+                  <button onclick="removeFromLibrary(${content.id})" class="bg-gray-700/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition">
                     <i class="fas fa-trash text-sm"></i>
                   </button>
                 `}
                 
-                <!-- iWebTV Cast (only if has URL) -->
-                ${hasStreamUrl ? `
-                  <button onclick="castToTV('${content.stream_url}')" class="bg-blue-600/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-500 transition" title="Cast to TV">
-                    <i class="fas fa-cast text-sm"></i>
-                  </button>
-                ` : ''}
+                <!-- Search All Sites -->
+                <button onclick="searchAllSites('${content.title}')" class="bg-green-600/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-green-500 transition" title="Search all sites">
+                  <i class="fas fa-globe text-sm"></i>
+                </button>
+                
+                <!-- iWebTV Cast -->
+                <button onclick="castToTV('${content.stream_url || ''}')" class="bg-blue-600/80 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-blue-500 transition">
+                  <i class="fas fa-cast text-sm"></i>
+                </button>
               </div>
             </div>
             
             <!-- Rating stars -->
-            <div class="star-rating flex justify-center space-x-1 mt-2" data-content-id="${contentId}">
+            <div class="star-rating flex justify-center space-x-1" data-content-id="${content.id}">
               ${[1,2,3,4,5].map(star => `
                 <i class="fas fa-star star text-sm cursor-pointer hover:text-yellow-500" 
-                   onclick="rateContent('${contentId}', ${star})"></i>
+                   onclick="rateContent(${content.id}, ${star})"></i>
               `).join('')}
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Title and Info -->
+      <!-- Title -->
       <div class="p-3">
-        <h4 class="text-sm font-semibold truncate" title="${content.title}">${content.title}</h4>
+        <h4 class="text-sm font-semibold truncate">${content.title}</h4>
         <div class="flex items-center justify-between mt-1">
           <span class="text-xs text-gray-400">
             <i class="fas fa-${typeIcon} mr-1"></i>
@@ -344,11 +301,6 @@ function createContentCard(content, inLibrary = false) {
             <span class="text-xs text-gray-400">${content.release_year}</span>
           ` : ''}
         </div>
-        ${content.provider ? `
-          <div class="text-xs text-gray-500 mt-1">
-            <i class="fas fa-tv mr-1"></i>${content.provider}
-          </div>
-        ` : ''}
       </div>
     </div>
   `;
@@ -367,7 +319,7 @@ function updateCategorySelects() {
 }
 
 // =====================================
-// Action Functions  
+// Action Functions
 // =====================================
 
 async function generateGuide() {
@@ -388,7 +340,7 @@ async function generateGuide() {
       
       showNotification(`Found ${movies.length} movies and ${tvShows.length} TV shows!`, 'success');
     } else {
-      showNotification(`Found ${response.data.total || 0} recommendations`, 'warning');
+      throw new Error(response.data.error || 'Discovery failed');
     }
   } catch (error) {
     console.error('Discovery error:', error);
@@ -629,12 +581,112 @@ function showSettings() {
   // TODO: Implement settings page
 }
 
-// Test movie button
-function testMovies() {
-  showNotification('TEST: Movies button works!', 'success');
+function showHome() {
+  currentView = 'home';
+  // TODO: Update view
 }
 
-// Test TV button
-function testTVShows() {
-  showNotification('TEST: TV Shows button works!', 'success');
+function showLibrary() {
+  currentView = 'library';
+  // TODO: Update view
+}
+
+function showCategories() {
+  currentView = 'categories';
+  showNotification('Categories view coming soon!', 'info');
+  // TODO: Implement categories view
+}
+
+function showMovies() {
+  currentView = 'movies';
+  showNotification('Movies view - TEST BUTTON WORKS!', 'success');
+  // TODO: Filter to show only movies
+}
+
+function showTVShows() {
+  currentView = 'tv';
+  showNotification('TV Shows view - TEST BUTTON WORKS!', 'success');
+  // TODO: Filter to show only TV shows
+}
+
+// =====================================
+// Form Handlers
+// =====================================
+
+// Handle add content form submission
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('add-content-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const selectedCategories = Array.from(form.category.selectedOptions).map(opt => opt.value);
+      
+      const content = {
+        title: formData.get('title'),
+        type: formData.get('type'),
+        stream_url: formData.get('stream_url'),
+        poster_url: formData.get('poster_url'),
+        overview: formData.get('overview'),
+        release_year: formData.get('release_year'),
+        genre: formData.get('tags'),
+        source: 'manual',
+        categories: selectedCategories
+      };
+      
+      await addToLibrary(content);
+      closeAddContent();
+    });
+  }
+});
+
+// Update poster preview
+function updatePosterPreview(url) {
+  const preview = document.getElementById('poster-preview');
+  if (!preview) return;
+  
+  if (url && url.startsWith('http')) {
+    preview.innerHTML = `<img src="${url}" alt="Poster" class="w-full h-full object-cover rounded-lg" onerror="this.onerror=null; this.parentElement.innerHTML='<i class=\"fas fa-exclamation-triangle text-3xl text-red-600\"></i>'">`;
+  } else {
+    preview.innerHTML = '<i class="fas fa-image text-3xl text-gray-600"></i>';
+  }
+}
+
+// Auto-fill from URL (tries to extract title from URL)
+async function autofillFromURL() {
+  const urlInput = document.querySelector('input[name="stream_url"]');
+  if (!urlInput || !urlInput.value) {
+    showNotification('Please enter a URL first', 'warning');
+    return;
+  }
+  
+  const url = urlInput.value;
+  
+  // Try to extract title from URL patterns
+  let title = '';
+  
+  // Common patterns
+  if (url.includes('tubi.tv')) {
+    const match = url.match(/\/movies\/([^\/\?]+)/);
+    if (match) title = match[1].replace(/-/g, ' ');
+  } else if (url.includes('pluto.tv')) {
+    const match = url.match(/\/on-demand\/movies\/([^\/\?]+)/);
+    if (match) title = match[1].replace(/-/g, ' ');
+  } else if (url.includes('roku.com')) {
+    const match = url.match(/\/details\/([^\/\?]+)/);
+    if (match) title = match[1].replace(/-/g, ' ');
+  }
+  
+  if (title) {
+    // Capitalize words
+    title = title.replace(/\b\w/g, l => l.toUpperCase());
+    document.querySelector('input[name="title"]').value = title;
+    showNotification('Title extracted from URL', 'success');
+    
+    // Try to fetch metadata from TMDB
+    // This would require calling your backend API
+  } else {
+    showNotification('Could not extract title from URL', 'info');
+  }
 }
