@@ -215,30 +215,31 @@ export class TMDBClient {
    */
   private generateStreamUrls(title: string, providers: TMDBWatchProvider[]): string[] {
     const urls: string[] = [];
-    // Clean title for better search results
-    const cleanTitle = title.replace(/[^\w\s]/g, '').toLowerCase().replace(/\s+/g, '-');
     const searchTitle = encodeURIComponent(title);
+    const freeStreamSearch = encodeURIComponent(`${title} free stream watch online`);
 
-    // Always add primary free services with working search URLs
-    urls.push(`https://tubitv.com/search?q=${searchTitle}`);
+    // PRIMARY: Google search for "title free stream" - most reliable
+    urls.push(`https://www.google.com/search?q=${freeStreamSearch}`);
+    
+    // SECONDARY: Direct service searches
+    urls.push(`https://tubitv.com/search/${searchTitle}`);
     urls.push(`https://www.roku.com/whats-on/search/${searchTitle}`);
     urls.push(`https://pluto.tv/en/search?query=${searchTitle}`);
     
     // Provider-specific URLs if available
     providers.forEach(provider => {
       switch (provider.provider_name) {
-        case 'Tubi TV':
-          // Tubi uses different URL structure
-          urls.push(`https://tubitv.com/search?q=${searchTitle}`);
-          break;
-        case 'The Roku Channel':
-          urls.push(`https://www.roku.com/whats-on/search/${searchTitle}`);
-          break;
         case 'Plex':
           urls.push(`https://watch.plex.tv/search?query=${searchTitle}`);
           break;
+        case 'Crackle':
+          urls.push(`https://www.crackle.com/search?q=${searchTitle}`);
+          break;
       }
     });
+
+    // FALLBACK: JustWatch aggregator
+    urls.push(`https://www.justwatch.com/us/search?q=${searchTitle}`);
 
     // Dedupe URLs
     return [...new Set(urls)];
