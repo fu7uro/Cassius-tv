@@ -58,7 +58,8 @@ export class PerplexityDiscovery {
       favoriteGenres: new Set<string>(),
       highRatedTitles: [] as string[],
       lowRatedTitles: [] as string[],
-      preferredTypes: { movie: 0, tv: 0 }
+      preferredTypes: { movie: 0, tv: 0 },
+      isEmpty: library.length === 0
     };
 
     // Analyze library
@@ -97,7 +98,20 @@ export class PerplexityDiscovery {
     // TIER 2: Secondary free services
     const tier2Services = 'Peacock-Free Freevee YouTube-Movies Vudu-Free Hoopla Kanopy';
 
-    // Build queries in priority order
+    // If library is empty, use popular/trending queries
+    if (context.isEmpty) {
+      queries.push(`best highly rated movies free on ${tier1Services} ${year} IMDb 7+ rating`);
+      queries.push(`top rated TV shows streaming free ${tier1Services} ${year} critically acclaimed`);
+      queries.push(`hidden gem movies free on ${tier1Services} underrated must watch`);
+      queries.push(`best action movies free streaming ${tier1Services} ${year}`);
+      queries.push(`best comedy movies free on ${tier1Services} ${year}`);
+      queries.push(`popular TV shows free ${tier1Services} binge worthy series`);
+      queries.push(`classic movies free streaming ${tier1Services} timeless films`);
+      queries.push(`best thrillers free on ${tier1Services} ${year} suspenseful`);
+      return queries;
+    }
+
+    // Build queries based on user's library
     
     // 1. Check primary services for user's favorite content
     if (context.highRatedTitles.length > 0) {
@@ -119,12 +133,6 @@ export class PerplexityDiscovery {
 
     // 4. Trending on free platforms
     queries.push(`trending now free movies ${tier1Services} most watched ${year}`);
-
-    // 5. Fallback: Web search for free streams (last resort)
-    if (queries.length < 4) {
-      queries.push(`free movie streaming sites legal ${year} no subscription required`);
-      queries.push(`watch free TV shows online legally ${year} best sites`);
-    }
 
     return queries.slice(0, 8); // Allow more queries for better coverage
   }

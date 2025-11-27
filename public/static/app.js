@@ -389,6 +389,18 @@ function showCategories() {
   // TODO: Implement categories view
 }
 
+function showMovies() {
+  currentView = 'movies';
+  showNotification('Movies view - TEST BUTTON WORKS!', 'success');
+  // TODO: Filter to show only movies
+}
+
+function showTVShows() {
+  currentView = 'tv';
+  showNotification('TV Shows view - TEST BUTTON WORKS!', 'success');
+  // TODO: Filter to show only TV shows
+}
+
 // =====================================
 // Form Handlers
 // =====================================

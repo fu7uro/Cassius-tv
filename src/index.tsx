@@ -37,7 +37,10 @@ app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    database: c.env.DB ? 'connected' : 'not configured'
+    database: c.env.DB ? 'connected' : 'not configured',
+    perplexity_configured: !!c.env.PERPLEXITY_API_KEY,
+    tmdb_configured: !!c.env.TMDB_API_KEY,
+    env_keys: Object.keys(c.env)
   })
 })
 
@@ -85,21 +88,50 @@ app.put('/api/preferences', async (c) => {
     await DB.prepare(`
       INSERT OR REPLACE INTO preferences (
         id, auto_refresh, refresh_interval, recommendations_per_type,
-        preferred_quality, ui_theme, show_adult_content
-      ) VALUES (1, ?, ?, ?, ?, ?, ?)
+        preferred_quality, ui_theme, show_adult_content, perplexity_api_key, tmdb_api_key
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       body.auto_refresh ?? true,
       body.refresh_interval ?? 7,
       body.recommendations_per_type ?? 12,
       body.preferred_quality ?? 'HD',
       body.ui_theme ?? 'dark',
-      body.show_adult_content ?? false
+      body.show_adult_content ?? false,
+      body.perplexity_api_key ?? null,
+      body.tmdb_api_key ?? null
     ).run()
     
     return c.json({ success: true })
   } catch (error) {
     console.error('Error updating preferences:', error)
     return c.json({ error: 'Failed to update preferences' }, 500)
+  }
+})
+
+// Save favorite titles for better recommendations
+app.post('/api/preferences/favorites', async (c) => {
+  const { DB } = c.env
+  
+  if (!DB) {
+    return c.json({ error: 'Database not configured' }, 503)
+  }
+
+  try {
+    const { favorites } = await c.req.json()
+    
+    // Store as JSON in preferences for now (can normalize later)
+    await DB.prepare(`
+      INSERT OR REPLACE INTO preferences (id, perplexity_api_key, tmdb_api_key)
+      VALUES (1, 
+        (SELECT perplexity_api_key FROM preferences WHERE id = 1),
+        (SELECT tmdb_api_key FROM preferences WHERE id = 1)
+      )
+    `).run()
+    
+    return c.json({ success: true })
+  } catch (error) {
+    console.error('Error saving favorites:', error)
+    return c.json({ error: 'Failed to save favorites' }, 500)
   }
 })
 
@@ -539,6 +571,8 @@ app.get('/', (c) => {
               <!-- Nav Links -->
               <div class="hidden md:flex items-center space-x-6">
                 <button class="hover:text-white transition" onclick="showHome()">Home</button>
+                <button class="hover:text-white transition text-blue-400" onclick="showMovies()">Movies</button>
+                <button class="hover:text-white transition text-purple-400" onclick="showTVShows()">TV Shows</button>
                 <button class="hover:text-white transition" onclick="showLibrary()">My Library</button>
                 <button class="hover:text-white transition" onclick="showCategories()">Categories</button>
               </div>
