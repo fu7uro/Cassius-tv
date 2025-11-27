@@ -56,12 +56,20 @@ async function loadLibrary() {
   }
 }
 
-async function addToLibrary(content) {
+async function addToLibrary(content, autoMove = false) {
   try {
-    const response = await axios.post(`${API_BASE}/api/library`, content);
+    // Ensure we send the full content object with in_library flag
+    const payload = {
+      ...content,
+      in_library: true
+    };
+    
+    const response = await axios.post(`${API_BASE}/api/library`, payload);
     if (response.data.success) {
       await loadLibrary();
-      showNotification('Added to library!', 'success');
+      if (!autoMove) {
+        showNotification(`Added "${content.title}" to library!`, 'success');
+      }
     }
   } catch (error) {
     console.error('Failed to add to library:', error);
@@ -182,7 +190,42 @@ function renderLibrary() {
     return;
   }
   
-  grid.innerHTML = libraryContent.map(item => createContentCard(item, true)).join('');
+  // Separate items with URLs from those without
+  const withUrls = libraryContent.filter(item => item.stream_url && item.stream_url !== '');
+  const withoutUrls = libraryContent.filter(item => !item.stream_url || item.stream_url === '');
+  
+  let html = '';
+  
+  // Show items with URLs first
+  if (withUrls.length > 0) {
+    html += `
+      <div class="col-span-full mb-4">
+        <h3 class="text-lg font-bold text-green-600">
+          <i class="fas fa-check-circle mr-2"></i>
+          Ready to Watch (${withUrls.length})
+        </h3>
+      </div>
+      ${withUrls.map(item => createContentCard(item, true)).join('')}
+    `;
+  }
+  
+  // Then show items needing URLs
+  if (withoutUrls.length > 0) {
+    html += `
+      <div class="col-span-full mb-4 ${withUrls.length > 0 ? 'mt-8' : ''}">
+        <h3 class="text-lg font-bold text-yellow-600">
+          <i class="fas fa-search mr-2"></i>
+          Need Stream URLs (${withoutUrls.length})
+        </h3>
+        <p class="text-sm text-gray-400 mt-1">
+          Search for these titles and add working stream URLs
+        </p>
+      </div>
+      ${withoutUrls.map(item => createContentCard(item, true)).join('')}
+    `;
+  }
+  
+  grid.innerHTML = html;
 }
 
 function createContentCard(content, inLibrary = false) {
@@ -316,21 +359,159 @@ function renderRecommendations() {
   const grid = document.getElementById('recommendations-grid');
   if (!grid || recommendations.length === 0) return;
   
-  grid.innerHTML = recommendations.map(item => createContentCard(item, false)).join('');
+  // Separate movies and TV shows
+  const movies = recommendations.filter(item => item.type === 'movie');
+  const tvShows = recommendations.filter(item => item.type === 'tv');
+  
+  let html = '';
+  
+  // Add section for movies if any
+  if (movies.length > 0) {
+    html += `
+      <div class="col-span-full mb-4">
+        <h3 class="text-xl font-bold text-red-600">
+          <i class="fas fa-film mr-2"></i>
+          Recommended Movies (${movies.length})
+        </h3>
+        <p class="text-sm text-gray-400 mt-1">
+          Click "Find Stream" to search, then "Add URL" when you find a working link
+        </p>
+      </div>
+      ${movies.map(item => createContentCard(item, false)).join('')}
+    `;
+  }
+  
+  // Add section for TV shows if any
+  if (tvShows.length > 0) {
+    html += `
+      <div class="col-span-full mb-4 mt-8">
+        <h3 class="text-xl font-bold text-blue-600">
+          <i class="fas fa-tv mr-2"></i>
+          Recommended TV Shows (${tvShows.length})
+        </h3>
+        <p class="text-sm text-gray-400 mt-1">
+          Search for free episodes, then save the stream URL to your library
+        </p>
+      </div>
+      ${tvShows.map(item => createContentCard(item, false)).join('')}
+    `;
+  }
+  
+  grid.innerHTML = html;
 }
 
 function playContent(url) {
-  if (!url) {
-    showNotification('No stream URL available', 'error');
+  if (!url || url === 'null' || url === '') {
+    showNotification('No stream URL available - use "Find Stream" button instead', 'error');
     return;
   }
   
   // Open stream URL in new tab
   window.open(url, '_blank');
-  showNotification('Opening search results - check if available!', 'info');
+  showNotification('Opening stream...', 'success');
 }
 
-// Search on multiple free streaming sites
+// New function: Search for free stream
+function searchForStream(title) {
+  const searchQuery = `${title} free stream watch online`;
+  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+  
+  window.open(searchUrl, '_blank');
+  showNotification('Searching for free streams...', 'info');
+}
+
+// New function: Prompt user for stream URL
+async function promptForStreamUrl(content) {
+  // Create a modal for URL input
+  const modalHtml = `
+    <div id="url-input-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+      <div class="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">
+          <i class="fas fa-link mr-2 text-red-600"></i>
+          Add Stream URL for "${content.title}"
+        </h3>
+        
+        <p class="text-gray-400 text-sm mb-4">
+          Found a working stream? Paste the URL below:
+        </p>
+        
+        <input 
+          type="url" 
+          id="stream-url-input" 
+          class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-red-600 focus:outline-none"
+          placeholder="https://..." 
+          value="${content.stream_url || ''}"
+        >
+        
+        <div class="flex justify-end space-x-3 mt-6">
+          <button 
+            onclick="closeUrlModal()" 
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
+          >
+            Cancel
+          </button>
+          <button 
+            onclick="saveStreamUrl(${JSON.stringify(content).replace(/"/g, '&quot;')})" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition font-semibold"
+          >
+            <i class="fas fa-save mr-2"></i>
+            Save & Add to Library
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Add modal to page
+  const modalDiv = document.createElement('div');
+  modalDiv.innerHTML = modalHtml;
+  document.body.appendChild(modalDiv);
+  
+  // Focus the input
+  setTimeout(() => {
+    document.getElementById('stream-url-input')?.focus();
+  }, 100);
+}
+
+// Close URL modal
+function closeUrlModal() {
+  const modal = document.getElementById('url-input-modal');
+  if (modal) {
+    modal.parentElement.remove();
+  }
+}
+
+// Save stream URL and add to library
+async function saveStreamUrl(content) {
+  const urlInput = document.getElementById('stream-url-input');
+  const streamUrl = urlInput?.value.trim();
+  
+  if (!streamUrl) {
+    showNotification('Please enter a valid URL', 'error');
+    return;
+  }
+  
+  // Close modal first
+  closeUrlModal();
+  
+  // Update content with URL
+  content.stream_url = streamUrl;
+  content.in_library = true;
+  
+  // Save to library
+  await addToLibrary(content, true);
+  
+  showNotification(`Added "${content.title}" to library with stream URL!`, 'success');
+  
+  // Refresh the view
+  await loadLibrary();
+  
+  // Remove from recommendations if it was there
+  recommendations = recommendations.filter(r => r.title !== content.title);
+  renderRecommendations();
+}
+
+// Search on multiple free streaming sites (keeping as backup)
 function searchAllSites(title) {
   const sites = [
     `https://tubitv.com/search?q=${encodeURIComponent(title)}`,
