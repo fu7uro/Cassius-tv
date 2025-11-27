@@ -1,34 +1,19 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webapp",
-  "compatibility_date": "2025-11-27",
+  "name": "cassius-tv",
+  "compatibility_date": "2024-11-01",
+  "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "./dist",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
+  
+  // D1 Database binding (uncomment and add database_id after creating in Cloudflare)
   // "d1_databases": [
   //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
+  //     "binding": "DB",
+  //     "database_name": "cassius-tv-db",
+  //     "database_id": "YOUR_DATABASE_ID_HERE"
   //   }
   // ],
-  // "ai": {
-  //   "binding": "AI"
-  // }
+
+  // Environment variables will be added via .dev.vars for local development
+  // and wrangler secret for production
 }
