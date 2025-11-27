@@ -5,15 +5,12 @@
   "compatibility_flags": ["nodejs_compat"],
   "pages_build_output_dir": "./dist",
   
-  // D1 Database binding (uncomment and add database_id after creating in Cloudflare)
-  // "d1_databases": [
-  //   {
-  //     "binding": "DB",
-  //     "database_name": "cassius-tv-db",
-  //     "database_id": "YOUR_DATABASE_ID_HERE"
-  //   }
-  // ],
-
-  // Environment variables will be added via .dev.vars for local development
-  // and wrangler secret for production
+  // D1 Database binding
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cassius-tv-db",
+      "database_id": "78f7fb6b-751b-4999-b780-381ffb31400f"
+    }
+  ]
 }

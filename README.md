@@ -6,9 +6,10 @@
 - **Features**: Smart recommendations, Netflix-style UI, library management, ratings system, iWebTV integration
 
 ## 🌐 URLs
+- **Production**: https://cassius-tv.pages.dev (Live! 🎉)
+- **Deployment**: https://46a50f98.cassius-tv.pages.dev
+- **GitHub**: https://github.com/fu7uro/Cassius-tv
 - **Development**: https://3000-ivvxdgb7l2aqcwppbtmus-583b4d74.sandbox.novita.ai
-- **Production**: Not deployed yet (run `npm run deploy:prod` after configuring Cloudflare)
-- **GitHub**: Not configured yet (add repository after setup)
 
 ## 🎯 Current Features (Completed)
 
@@ -196,9 +197,11 @@ pm2 restart cassius-tv  # Restart server
 - **Process Manager**: PM2
 
 ## 📦 Deployment Status
-- **Platform**: Cloudflare Pages (pending)
-- **Status**: ❌ Not deployed (development only)
+- **Platform**: Cloudflare Pages
+- **Status**: ✅ LIVE in production!
+- **Database**: D1 SQLite (78f7fb6b-751b-4999-b780-381ffb31400f)
 - **Last Updated**: November 27, 2025
+- **Project**: cassius-tv
 
 ## 🎨 Design Philosophy
 - **Simplicity First**: No overcomplicated architecture
