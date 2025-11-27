@@ -292,12 +292,19 @@ app.post('/api/ratings', async (c) => {
   }
 })
 
-// Test Perplexity API directly
+// Test Perplexity API directly with correct model
 app.get('/api/test-perplexity', async (c) => {
-  const { PERPLEXITY_API_KEY } = c.env
+  const { PERPLEXITY_API_KEY, DB } = c.env
   
   if (!PERPLEXITY_API_KEY) {
     return c.json({ error: 'No API key' }, 400)
+  }
+  
+  // Check library count
+  let libraryCount = 0;
+  if (DB) {
+    const result = await DB.prepare('SELECT COUNT(*) as count FROM content WHERE in_library = TRUE').first();
+    libraryCount = result?.count || 0;
   }
   
   try {
@@ -308,23 +315,30 @@ app.get('/api/test-perplexity', async (c) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'pplx-70b-online',
+        model: 'sonar',
         messages: [{
+          role: 'system',
+          content: 'You are a helpful assistant.'
+        }, {
           role: 'user',
-          content: 'Say "Hello from Perplexity!" if you can read this.'
-        }]
+          content: 'List 3 popular free streaming movies available on Tubi. Just list their titles.'
+        }],
+        temperature: 0.7,
+        max_tokens: 500
       })
     })
     
     const data = await response.json()
     
     return c.json({
-      status: response.status,
-      ok: response.ok,
-      data
+      library_count: libraryCount,
+      perplexity_status: response.status,
+      perplexity_ok: response.ok,
+      perplexity_response: data
     })
   } catch (error) {
     return c.json({
+      library_count: libraryCount,
       error: 'Fetch failed',
       message: error instanceof Error ? error.message : 'Unknown'
     }, 500)

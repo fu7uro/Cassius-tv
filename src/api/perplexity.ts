@@ -150,7 +150,7 @@ export class PerplexityDiscovery {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-sonar-large-128k-online', // Using current Perplexity model
+          model: 'sonar', // Using current Perplexity model
           messages: [
             {
               role: 'system',
