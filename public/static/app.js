@@ -1,4 +1,5 @@
 // Cassius TV - Frontend Application
+// Version: 2.0 - Smart Two-Button Workflow
 // =====================================
 
 // Global state
