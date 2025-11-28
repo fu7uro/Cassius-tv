@@ -590,8 +590,15 @@ app.get('/', (c) => {
         <!-- Font Awesome Icons -->
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        
         <!-- Custom Styles -->
         <style>
+          * { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          }
+          
           /* Modern dark theme with red/silver aesthetic */
           :root {
             --bg-primary: #0a0a0a;
@@ -606,9 +613,46 @@ app.get('/', (c) => {
           }
           
           body {
-            background: var(--bg-primary);
+            background: linear-gradient(135deg, #000000 0%, #050505 50%, #0a0a0a 100%);
             color: var(--text-primary);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+          }
+          
+          /* === STARLIGHT PARTICLE SYSTEM === */
+          .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+          }
+          
+          .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #FFFFFF;
+            border-radius: 50%;
+            animation: float 15s linear infinite;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            opacity: 0;
+          }
+          
+          @keyframes float {
+            0% {
+              transform: translateY(110vh) rotate(0deg);
+              opacity: 0;
+            }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% {
+              transform: translateY(-10vh) rotate(360deg);
+              opacity: 0;
+            }
           }
           
           /* Custom scrollbar */
@@ -632,20 +676,34 @@ app.get('/', (c) => {
             background: linear-gradient(180deg, var(--accent-red-hover), var(--accent-silver-bright));
           }
           
-          /* Content card hover effect */
+          /* Navigation hover effects with silver glow */
+          nav button, nav a {
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 20;
+          }
+          
+          nav button:hover, nav a:hover {
+            color: #FFFFFF;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
+          }
+          
+          /* Content card hover effect with silver accents */
           .content-card {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             background: var(--bg-secondary);
             border: 1px solid transparent;
+            position: relative;
+            z-index: 10;
           }
           
           .content-card:hover {
             transform: scale(1.05) translateY(-4px);
             box-shadow: 
-              0 20px 40px rgba(220, 38, 38, 0.2),
-              0 0 0 1px var(--accent-red);
-            z-index: 10;
+              0 20px 40px rgba(255, 255, 255, 0.1),
+              0 0 0 1px rgba(255, 255, 255, 0.2);
+            z-index: 20;
             background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
           }
           
@@ -687,6 +745,9 @@ app.get('/', (c) => {
         </style>
     </head>
     <body>
+        <!-- Starlight Particle System -->
+        <div class="particles" id="particles"></div>
+        
         <!-- Navigation -->
         <nav class="fixed top-0 left-0 right-0 bg-gradient-to-b from-black/95 via-black/80 to-transparent z-50 px-4 lg:px-8 py-4 backdrop-blur-sm">
           <div class="flex items-center justify-between">
@@ -950,6 +1011,56 @@ app.get('/', (c) => {
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
         <script src="/static/app.js"></script>
+        
+        <!-- Starlight Particle Generator -->
+        <script>
+          function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = window.innerWidth < 768 ? 30 : 60; // Fewer on mobile for battery
+            
+            for (let i = 0; i < particleCount; i++) {
+              const particle = document.createElement('div');
+              particle.className = 'particle';
+              
+              // Random horizontal position
+              particle.style.left = Math.random() * 100 + '%';
+              
+              // Randomize delay
+              particle.style.animationDelay = Math.random() * 8 + 's';
+              
+              // Vary speed for depth effect
+              particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+              
+              // Randomize size for depth (1px to 4px)
+              const size = Math.random() * 3 + 1;
+              particle.style.width = size + 'px';
+              particle.style.height = size + 'px';
+              
+              particlesContainer.appendChild(particle);
+            }
+          }
+          
+          // Initialize particles immediately
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', createParticles);
+          } else {
+            createParticles();
+          }
+          
+          // Optimize for mobile/iPad
+          window.addEventListener('resize', function() {
+            const particles = document.querySelectorAll('.particle');
+            if (window.innerWidth < 768 && particles.length > 30) {
+              particles.forEach((particle, index) => {
+                if (index >= 30) particle.style.display = 'none';
+              });
+            } else {
+              particles.forEach(particle => {
+                particle.style.display = 'block';
+              });
+            }
+          });
+        </script>
     </body>
     </html>
   `)
