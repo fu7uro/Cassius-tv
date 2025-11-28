@@ -1,3 +1,4 @@
+// Version 2.2 - Thumbs Rating System - Cache Bust: 1764308751
 // Cassius TV - Frontend Application
 // Version: 2.1 - Smart Two-Button Workflow Fixed
 // =====================================
