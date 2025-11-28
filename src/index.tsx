@@ -703,7 +703,7 @@ app.get('/', (c) => {
             <!-- Right side actions -->
             <div class="flex items-center space-x-4">
               <!-- Search -->
-              <button onclick="toggleSearch()" class="hover:text-white transition" title="Search Library">
+              <button class="hover:text-white transition">
                 <i class="fas fa-search text-xl"></i>
               </button>
               
