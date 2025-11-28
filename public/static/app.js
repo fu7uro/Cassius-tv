@@ -768,21 +768,12 @@ async function handleAddContentSubmit(e) {
   e.preventDefault();
   
   const formData = new FormData(e.target);
-  const categoryValue = formData.get('category');
   
-  // Find category details
-  const category = CATEGORIES.find(c => c.value === categoryValue);
-  if (!category) {
-    showNotification('Please select a valid category', 'error');
-    return;
-  }
-  
-  // Build content object
+  // Build content object - simple version without category dropdown
   const content = {
     title: formData.get('title'),
-    type: category.type,
-    genre: category.genre,
-    category: categoryValue,
+    type: formData.get('type'),
+    genre: formData.get('genre') || null,
     stream_url: formData.get('stream_url'),
     release_year: formData.get('release_year') || null,
     overview: formData.get('overview') || null,

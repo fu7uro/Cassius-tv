@@ -848,8 +848,14 @@ app.get('/', (c) => {
                       <option value="movie">🎬 Movie</option>
                       <option value="tv">📺 TV Show</option>
                       <option value="sports">🏈 Sports Event</option>
-                      <option value="documentary">📹 Documentary</option>
                     </select>
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Genre</label>
+                    <input type="text" name="genre" placeholder="e.g., Action, Drama, UFC, Football..."
+                           class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Optional - helps with filtering</p>
                   </div>
                   
                   <div>
@@ -885,32 +891,7 @@ app.get('/', (c) => {
                     <p class="text-xs text-gray-500 mt-1">Upload from your device's photo library</p>
                   </div>
                   
-                  <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-300">Category *</label>
-                    <select name="category" required class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
-                      <option value="">Select a category...</option>
-                      <optgroup label="TV Shows">
-                        <option value="tv-drama">TV Show - Drama</option>
-                        <option value="tv-comedy">TV Show - Comedy</option>
-                        <option value="tv-action">TV Show - Action</option>
-                        <option value="tv-thriller">TV Show - Thriller</option>
-                        <option value="tv-documentary">TV Show - Documentary</option>
-                      </optgroup>
-                      <optgroup label="Movies">
-                        <option value="movie-drama">Movie - Drama</option>
-                        <option value="movie-comedy">Movie - Comedy</option>
-                        <option value="movie-action">Movie - Action</option>
-                        <option value="movie-thriller">Movie - Thriller</option>
-                        <option value="movie-crime">Movie - Crime</option>
-                        <option value="movie-horror">Movie - Horror</option>
-                      </optgroup>
-                      <optgroup label="Sports">
-                        <option value="sports-ufc">Sports - UFC</option>
-                        <option value="sports-football">Sports - Football</option>
-                        <option value="sports-basketball">Sports - Basketball</option>
-                      </optgroup>
-                    </select>
-                  </div>
+
                 </div>
                 
                 <!-- Full Width Description -->
