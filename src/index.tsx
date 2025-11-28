@@ -26,7 +26,15 @@ app.use('/api/*', cors({
 
 // Serve static files from public directory
 app.use('/static/*', serveStatic({ root: './public' }))
+
+// Serve favicon and app icons
 app.use('/favicon.ico', serveStatic({ root: './public' }))
+app.use('/favicon-16x16.png', serveStatic({ root: './public' }))
+app.use('/favicon-32x32.png', serveStatic({ root: './public' }))
+app.use('/apple-touch-icon.png', serveStatic({ root: './public' }))
+app.use('/icon-192.png', serveStatic({ root: './public' }))
+app.use('/icon-512.png', serveStatic({ root: './public' }))
+app.use('/manifest.json', serveStatic({ root: './public' }))
 
 // ============================
 // API Routes
