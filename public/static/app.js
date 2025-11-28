@@ -256,6 +256,12 @@ function createContentCard(content, inLibrary = false) {
             <i class="fas fa-check mr-1"></i>Ready
           </span>
         </div>
+        <!-- Delete Stream URL Button -->
+        <div class="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onclick="confirmDeleteStreamUrl(${content.id}, '${content.title}')" class="bg-red-600/90 hover:bg-red-700 text-white rounded-full w-8 h-8 flex items-center justify-center transition" title="Delete Stream URL">
+            <i class="fas fa-trash text-sm"></i>
+          </button>
+        </div>
       ` : ''}
       
       <!-- Poster -->
@@ -637,4 +643,244 @@ function testMovies() {
 // Test TV button
 function testTVShows() {
   showNotification('TEST: TV Shows button works!', 'success');
+}
+
+// =====================================
+// Search Functionality
+// =====================================
+
+let searchQuery = '';
+
+function toggleSearch() {
+  const searchContainer = document.getElementById('search-container');
+  if (!searchContainer) {
+    createSearchUI();
+  } else {
+    searchContainer.remove();
+  }
+}
+
+function createSearchUI() {
+  const searchHtml = `
+    <div id="search-container" class="fixed top-20 right-4 z-40 bg-gray-900 rounded-lg shadow-xl p-4 w-80 animate-fade-in">
+      <div class="flex items-center space-x-2">
+        <input 
+          type="text" 
+          id="search-input" 
+          class="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-red-600 focus:outline-none" 
+          placeholder="Search library..."
+          onkeyup="handleSearchInput(event)"
+        >
+        <button onclick="toggleSearch()" class="bg-gray-700 hover:bg-gray-600 rounded-lg w-10 h-10 flex items-center justify-center transition">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button onclick="filterByType('all')" class="search-filter-btn px-3 py-1 text-sm rounded-full bg-gray-700 hover:bg-red-600 transition" data-type="all">All</button>
+        <button onclick="filterByType('movie')" class="search-filter-btn px-3 py-1 text-sm rounded-full bg-gray-700 hover:bg-red-600 transition" data-type="movie">Movies</button>
+        <button onclick="filterByType('tv')" class="search-filter-btn px-3 py-1 text-sm rounded-full bg-gray-700 hover:bg-red-600 transition" data-type="tv">TV Shows</button>
+        <button onclick="filterByStatus('with-url')" class="search-filter-btn px-3 py-1 text-sm rounded-full bg-gray-700 hover:bg-green-600 transition" data-status="with-url">Ready</button>
+        <button onclick="filterByStatus('no-url')" class="search-filter-btn px-3 py-1 text-sm rounded-full bg-gray-700 hover:bg-yellow-600 transition" data-status="no-url">Need URL</button>
+      </div>
+      <div id="search-results" class="mt-3 text-sm text-gray-400"></div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', searchHtml);
+  document.getElementById('search-input')?.focus();
+}
+
+function handleSearchInput(event) {
+  searchQuery = event.target.value.toLowerCase();
+  performSearch();
+}
+
+function filterByType(type) {
+  // Update active button styling
+  document.querySelectorAll('[data-type]').forEach(btn => {
+    btn.classList.toggle('bg-red-600', btn.dataset.type === type);
+  });
+  
+  const filtered = type === 'all' 
+    ? libraryContent 
+    : libraryContent.filter(item => item.type === type);
+  
+  renderFilteredLibrary(filtered);
+}
+
+function filterByStatus(status) {
+  // Update active button styling
+  document.querySelectorAll('[data-status]').forEach(btn => {
+    btn.classList.toggle('bg-green-600', btn.dataset.status === status && status === 'with-url');
+    btn.classList.toggle('bg-yellow-600', btn.dataset.status === status && status === 'no-url');
+  });
+  
+  const filtered = status === 'with-url'
+    ? libraryContent.filter(item => item.stream_url && item.stream_url !== '')
+    : libraryContent.filter(item => !item.stream_url || item.stream_url === '');
+  
+  renderFilteredLibrary(filtered);
+}
+
+function performSearch() {
+  if (!searchQuery) {
+    renderLibrary();
+    document.getElementById('search-results').innerHTML = '';
+    return;
+  }
+  
+  const filtered = libraryContent.filter(item => 
+    item.title.toLowerCase().includes(searchQuery) ||
+    (item.genre && item.genre.toLowerCase().includes(searchQuery)) ||
+    (item.provider && item.provider.toLowerCase().includes(searchQuery))
+  );
+  
+  renderFilteredLibrary(filtered);
+  
+  // Update search results count
+  const resultsEl = document.getElementById('search-results');
+  if (resultsEl) {
+    resultsEl.innerHTML = `Found ${filtered.length} result${filtered.length !== 1 ? 's' : ''}`;
+  }
+}
+
+function renderFilteredLibrary(filtered) {
+  const grid = document.getElementById('library-grid');
+  if (!grid) return;
+  
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12">
+        <i class="fas fa-search text-4xl text-gray-600 mb-4"></i>
+        <p class="text-gray-400">No results found</p>
+        <button onclick="clearSearch()" class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">
+          Clear Search
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
+  // Group by status like in normal library view
+  const withUrls = filtered.filter(item => item.stream_url && item.stream_url !== '');
+  const withoutUrls = filtered.filter(item => !item.stream_url || item.stream_url === '');
+  
+  let html = '';
+  
+  if (withUrls.length > 0) {
+    html += `
+      <div class="col-span-full mb-4">
+        <h3 class="text-lg font-bold text-green-600">
+          <i class="fas fa-check-circle mr-2"></i>
+          Ready to Watch (${withUrls.length})
+        </h3>
+      </div>
+      ${withUrls.map(item => createContentCard(item, true)).join('')}
+    `;
+  }
+  
+  if (withoutUrls.length > 0) {
+    html += `
+      <div class="col-span-full mb-4 ${withUrls.length > 0 ? 'mt-8' : ''}">
+        <h3 class="text-lg font-bold text-yellow-600">
+          <i class="fas fa-search mr-2"></i>
+          Need Stream URLs (${withoutUrls.length})
+        </h3>
+      </div>
+      ${withoutUrls.map(item => createContentCard(item, true)).join('')}
+    `;
+  }
+  
+  grid.innerHTML = html;
+}
+
+function clearSearch() {
+  searchQuery = '';
+  const input = document.getElementById('search-input');
+  if (input) input.value = '';
+  renderLibrary();
+  const resultsEl = document.getElementById('search-results');
+  if (resultsEl) resultsEl.innerHTML = '';
+}
+
+// =====================================
+// Delete Stream URL Functionality
+// =====================================
+
+function confirmDeleteStreamUrl(contentId, title) {
+  const modalHtml = `
+    <div id="delete-confirmation-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+      <div class="bg-gray-900 rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold mb-4">
+          <i class="fas fa-exclamation-triangle mr-2 text-yellow-600"></i>
+          Delete Stream URL?
+        </h3>
+        
+        <p class="text-gray-300 mb-2">
+          Are you sure you want to delete the stream URL for:
+        </p>
+        <p class="text-white font-semibold mb-4">
+          "${title}"
+        </p>
+        <p class="text-gray-400 text-sm mb-6">
+          The item will remain in your library, but you'll need to add a new stream URL to watch it.
+        </p>
+        
+        <div class="flex justify-end space-x-3">
+          <button 
+            onclick="closeDeleteModal()" 
+            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
+          >
+            Cancel
+          </button>
+          <button 
+            onclick="deleteStreamUrl(${contentId})" 
+            class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition font-semibold"
+          >
+            <i class="fas fa-trash mr-2"></i>
+            Delete URL
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('delete-confirmation-modal');
+  if (modal) modal.remove();
+}
+
+async function deleteStreamUrl(contentId) {
+  closeDeleteModal();
+  
+  try {
+    // Find the content item
+    const content = libraryContent.find(item => item.id === contentId);
+    if (!content) {
+      showNotification('Content not found', 'error');
+      return;
+    }
+    
+    // Update content without stream URL
+    const updatedContent = {
+      ...content,
+      stream_url: '',
+      in_library: true
+    };
+    
+    const response = await axios.post(`${API_BASE}/api/library`, updatedContent);
+    
+    if (response.data.success) {
+      showNotification(`Stream URL deleted for "${content.title}"`, 'success');
+      await loadLibrary();
+    } else {
+      showNotification('Failed to delete stream URL', 'error');
+    }
+  } catch (error) {
+    console.error('Error deleting stream URL:', error);
+    showNotification('Failed to delete stream URL', 'error');
+  }
 }
