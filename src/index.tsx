@@ -394,6 +394,23 @@ app.post('/api/discover', async (c) => {
       }
     }
 
+    // Get recommendation history to filter out duplicates
+    let recommendationHistory = [];
+    if (DB) {
+      try {
+        // Get titles recommended in last 30 days
+        const historyResult = await DB.prepare(`
+          SELECT title, tmdb_id, shown_count 
+          FROM recommendation_history 
+          WHERE recommended_at > datetime('now', '-30 days')
+        `).all();
+        recommendationHistory = historyResult.results || [];
+        console.log(`Found ${recommendationHistory.length} items in recent recommendation history`);
+      } catch (histError) {
+        console.error('Failed to load recommendation history:', histError);
+      }
+    }
+    
     // Discover content with Perplexity
     console.log('Discovering content with Perplexity...');
     console.log('Library size:', userLibrary.length);
@@ -408,6 +425,17 @@ app.post('/api/discover', async (c) => {
         preferences
       );
       console.log(`Found ${discovered.length} potential items from Perplexity`);
+      
+      // Filter out recently recommended content
+      const historyTitles = new Set(recommendationHistory.map(h => h.title.toLowerCase()));
+      const filteredDiscovered = discovered.filter(item => {
+        const titleLower = item.title.toLowerCase();
+        return !historyTitles.has(titleLower);
+      });
+      
+      console.log(`After filtering history: ${filteredDiscovered.length} items (removed ${discovered.length - filteredDiscovered.length} duplicates)`);
+      discovered = filteredDiscovered;
+      
     } catch (perplexityError) {
       console.error('Perplexity discovery error:', perplexityError);
       return c.json({
@@ -454,10 +482,11 @@ app.post('/api/discover', async (c) => {
     const enrichedContent = (await Promise.all(enrichmentPromises))
       .filter(item => item !== null);
 
-    // Save discovered content to DB (if available)
+    // Save discovered content to DB and track in recommendation history
     if (DB && enrichedContent.length > 0) {
       for (const content of enrichedContent) {
         try {
+          // Save to content table
           await DB.prepare(`
             INSERT OR IGNORE INTO content (
               tmdb_id, title, type, poster_url, backdrop_url, 
@@ -479,6 +508,21 @@ app.post('/api/discover', async (c) => {
             content.genres?.join(', ') || null,
             content.source || 'recommendation'
           ).run();
+          
+          // Track in recommendation history
+          await DB.prepare(`
+            INSERT INTO recommendation_history (tmdb_id, title, type, genre, shown_count)
+            VALUES (?, ?, ?, ?, 1)
+            ON CONFLICT(title) DO UPDATE SET 
+              shown_count = shown_count + 1,
+              recommended_at = CURRENT_TIMESTAMP
+          `).bind(
+            content.tmdb_id || null,
+            content.title,
+            content.type,
+            content.genres?.join(', ') || null
+          ).run();
+          
         } catch (insertError) {
           console.error('Failed to insert content:', insertError);
         }

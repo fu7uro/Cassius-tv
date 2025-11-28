@@ -716,10 +716,15 @@ function showSettings() {
 
 // Category Navigation Functions
 function showMoviesByGenre(genre) {
+  console.log('Filtering movies by genre:', genre);
+  console.log('Library content:', libraryContent.length, 'items');
+  console.log('Sample items:', libraryContent.slice(0, 3).map(i => ({ title: i.title, type: i.type, genre: i.genre })));
+  
   const filtered = libraryContent.filter(item => 
     item.type === 'movie' && item.genre === genre
   );
   
+  console.log('Filtered results:', filtered.length, 'items');
   renderCategoryView('Movies', genre, filtered);
 }
 
