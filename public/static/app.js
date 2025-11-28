@@ -103,7 +103,27 @@ async function rateContent(contentId, rating) {
       rating: rating
     });
     if (response.data.success) {
-      showNotification(`Rated ${rating} stars`, 'success');
+      // Visual feedback based on thumbs up (5) or down (1)
+      const ratingContainer = document.querySelector(`[data-content-id="${contentId}"]`);
+      if (ratingContainer) {
+        if (rating === 5) {
+          // Thumbs up - highlight green
+          const thumbsUp = ratingContainer.querySelector('.thumbs-up i');
+          if (thumbsUp) {
+            thumbsUp.classList.remove('text-gray-400');
+            thumbsUp.classList.add('text-green-500');
+          }
+          showNotification('👍 Great choice! We\'ll find similar content', 'success');
+        } else if (rating === 1) {
+          // Thumbs down - highlight red
+          const thumbsDown = ratingContainer.querySelector('.thumbs-down i');
+          if (thumbsDown) {
+            thumbsDown.classList.remove('text-gray-400');
+            thumbsDown.classList.add('text-red-500');
+          }
+          showNotification('👎 Got it! We\'ll avoid similar content', 'info');
+        }
+      }
     }
   } catch (error) {
     console.error('Failed to rate content:', error);
@@ -273,8 +293,8 @@ function createContentCard(content, inLibrary = false) {
           </div>`
         }
         
-        <!-- Overlay on hover -->
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <!-- Overlay - Always visible on mobile, hover on desktop -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
           <div class="absolute bottom-0 left-0 right-0 p-3">
             <!-- Action buttons -->
             <div class="flex flex-col space-y-2">
@@ -327,12 +347,14 @@ function createContentCard(content, inLibrary = false) {
               </div>
             </div>
             
-            <!-- Rating stars -->
-            <div class="star-rating flex justify-center space-x-1 mt-2" data-content-id="${contentId}">
-              ${[1,2,3,4,5].map(star => `
-                <i class="fas fa-star star text-sm cursor-pointer hover:text-yellow-500" 
-                   onclick="rateContent('${contentId}', ${star})"></i>
-              `).join('')}
+            <!-- Thumbs Up/Down Rating -->
+            <div class="thumbs-rating flex justify-center space-x-3 mt-2" data-content-id="${contentId}">
+              <button onclick="rateContent('${contentId}', 1)" class="thumbs-down hover:scale-110 transition-transform" title="Not interested">
+                <i class="fas fa-thumbs-down text-lg text-gray-400 hover:text-red-500"></i>
+              </button>
+              <button onclick="rateContent('${contentId}', 5)" class="thumbs-up hover:scale-110 transition-transform" title="I like this!">
+                <i class="fas fa-thumbs-up text-lg text-gray-400 hover:text-green-500"></i>
+              </button>
             </div>
           </div>
         </div>
