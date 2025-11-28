@@ -87,54 +87,53 @@ export class PerplexityDiscovery {
 
   /**
    * Generate smart search queries based on user context
+   * FOCUS: Get actual movie/show TITLES, not streaming platform names
+   * NEVER mention streaming platforms - focus only on content quality
    */
   private generateSmartQueries(context: any, preferences: any): string[] {
     const queries: string[] = [];
     const year = new Date().getFullYear();
 
-    // TIER 1: Primary free streaming services (highest priority)
-    const tier1Services = 'Plex Tubi Crackle "Roku Channel" "Pluto TV"';
-    
-    // TIER 2: Secondary free services
-    const tier2Services = 'Peacock-Free Freevee YouTube-Movies Vudu-Free Hoopla Kanopy';
-
-    // If library is empty, use popular/trending queries
+    // If library is empty, get popular content titles
     if (context.isEmpty) {
-      queries.push(`best highly rated movies free on ${tier1Services} ${year} IMDb 7+ rating`);
-      queries.push(`top rated TV shows streaming free ${tier1Services} ${year} critically acclaimed`);
-      queries.push(`hidden gem movies free on ${tier1Services} underrated must watch`);
-      queries.push(`best action movies free streaming ${tier1Services} ${year}`);
-      queries.push(`best comedy movies free on ${tier1Services} ${year}`);
-      queries.push(`popular TV shows free ${tier1Services} binge worthy series`);
-      queries.push(`classic movies free streaming ${tier1Services} timeless films`);
-      queries.push(`best thrillers free on ${tier1Services} ${year} suspenseful`);
+      queries.push(`What are 12 highly rated movies from ${year-5} to ${year} with IMDb rating 7.0 or higher? Give me just the movie titles.`);
+      queries.push(`What are 12 critically acclaimed TV shows from ${year-3} to ${year}? Give me just the show titles.`);
+      queries.push(`What are 8 underrated hidden gem movies that film critics love? Give me just the movie titles.`);
+      queries.push(`What are 8 must-watch thriller movies from ${year-5} to ${year}? Give me just the movie titles.`);
       return queries;
     }
 
-    // Build queries based on user's library
+    // Build queries based on user's library and ratings
     
-    // 1. Check primary services for user's favorite content
+    // 1. Movies similar to user's favorites (based on user's 4-5 star ratings)
     if (context.highRatedTitles.length > 0) {
-      context.highRatedTitles.slice(0, 2).forEach((title: string) => {
-        queries.push(`"${title}" streaming free on ${tier1Services} watch now ${year}`);
-      });
+      const topFavorite = context.highRatedTitles[0];
+      queries.push(`What are 12 movies similar to "${topFavorite}" with same genre and themes? Give me just the movie titles.`);
+      
+      if (context.highRatedTitles.length > 1) {
+        const secondFavorite = context.highRatedTitles[1];
+        queries.push(`What are 12 movies like "${secondFavorite}" that fans would enjoy? Give me just the movie titles.`);
+      }
     }
 
-    // 2. Genre-specific searches on primary services
+    // 2. Genre-based recommendations from favorite genres
     Array.from(context.favoriteGenres).slice(0, 2).forEach(genre => {
-      queries.push(`best ${genre} movies streaming free ${tier1Services} available now ${year}`);
-      queries.push(`underrated ${genre} TV shows free on ${tier1Services} hidden gems`);
+      queries.push(`What are 12 best ${genre} movies from ${year-10} to ${year}? Give me just the movie titles.`);
+      queries.push(`What are 8 highly rated ${genre} TV shows worth watching? Give me just the show titles.`);
     });
 
-    // 3. Similar content on any free service
-    if (context.highRatedTitles.length > 0) {
-      queries.push(`movies similar to ${context.highRatedTitles[0]} free streaming ${tier1Services} ${tier2Services}`);
+    // 3. Recent popular content in user's preferred genres
+    if (context.favoriteGenres.size > 0) {
+      const topGenre = Array.from(context.favoriteGenres)[0];
+      queries.push(`What are 12 recent ${topGenre} movies from ${year-2} to ${year} with great reviews? Give me just the movie titles.`);
     }
 
-    // 4. Trending on free platforms
-    queries.push(`trending now free movies ${tier1Services} most watched ${year}`);
+    // 4. If user has low-rated content, avoid similar content
+    if (context.lowRatedTitles.length > 0) {
+      console.log(`[Context] User dislikes: ${context.lowRatedTitles.join(', ')}`);
+    }
 
-    return queries.slice(0, 8); // Allow more queries for better coverage
+    return queries.slice(0, 6); // Reduced queries for better focus
   }
 
   /**
@@ -154,31 +153,47 @@ export class PerplexityDiscovery {
           messages: [
             {
               role: 'system',
-              content: `You are an expert at finding FREE streaming content. Your task is to find movies and TV shows that are CURRENTLY available for free streaming.
+              content: `You are a movie and TV show recommendation expert. Your ONLY job is to recommend SPECIFIC movie and TV show TITLES.
 
-CRITICAL REQUIREMENTS:
-1. ONLY return content that is 100% FREE to watch (no trials, no subscriptions)
-2. Prioritize these services IN ORDER: Plex, Tubi, Crackle, Roku Channel, Pluto TV, Peacock Free, Freevee
-3. Include the DIRECT streaming URL when possible (not just the service name)
-4. Verify the content is actually available (not just listed)
-5. Take your time - accuracy is more important than speed
+CRITICAL RULES - FOLLOW EXACTLY:
+1. Return ONLY actual movie/TV show titles (e.g., "The Godfather", "Breaking Bad", "Inception")
+2. DO NOT return streaming platform names (NO "Plex", "Tubi", "Netflix", "Amazon", etc.)
+3. DO NOT return search terms, category names, or lists (NO "Best Action Movies", "Top 10")
+4. Each title must be a real, specific, watchable piece of content
+5. Focus on high-quality recommendations based on user's taste
+6. Ignore any mentions of streaming services in the user query - focus only on finding great titles
 
 Return a JSON array with EXACTLY this structure:
 [{
-  "title": "Exact Title",
+  "title": "Exact Movie/Show Title",
   "type": "movie" or "tv",
-  "streamUrl": "direct URL to watch (if available)",
-  "provider": "Service Name",
-  "confidence": 0.0 to 1.0 (how sure you are it's free and available)
+  "confidence": 0.9
 }]
 
-If you find a great match on a priority service, that's worth 10 mediocre matches elsewhere.`
+EXAMPLES OF PERFECT RESPONSES:
+✅ "The Shawshank Redemption" (movie)
+✅ "Inception" (movie)
+✅ "Breaking Bad" (TV show)
+✅ "The Wire" (TV show)
+✅ "Parasite" (movie)
+✅ "The Godfather" (movie)
+
+EXAMPLES OF TERRIBLE RESPONSES (NEVER DO THIS):
+❌ "Plex Movies"
+❌ "Tubi Free Content"
+❌ "Best Action Movies"
+❌ "Streaming Platforms"
+❌ "Netflix Originals"
+❌ "Top 10 Thrillers"
+❌ "Free Streaming Content"
+
+If the user mentions streaming platforms, IGNORE those mentions and focus ONLY on great movie/show titles.`
             },
             {
               role: 'user',
               content: `${query}
 
-Please search thoroughly and return the BEST free options available right now. Take your time to verify availability.`
+Remember: Return ONLY specific movie/TV show titles, not platform names or categories.`
             }
           ],
           temperature: 0.3, // Lower temperature for more consistent results
@@ -194,7 +209,7 @@ Please search thoroughly and return the BEST free options available right now. T
       }
 
       const data = await response.json();
-      console.log('[Perplexity] Response:', JSON.stringify(data).substring(0, 200));
+      console.log('[Perplexity] Raw API response:', JSON.stringify(data, null, 2).substring(0, 500));
       const content = data.choices?.[0]?.message?.content;
 
       if (!content) {
@@ -202,13 +217,21 @@ Please search thoroughly and return the BEST free options available right now. T
         return [];
       }
 
+      console.log('[Perplexity] Content received:', content);
+
       // Parse the response
       try {
         const parsed = JSON.parse(content);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
+        const results = Array.isArray(parsed) ? parsed : [];
+        console.log(`[Perplexity] Successfully parsed ${results.length} titles:`, results.map(r => r.title).join(', '));
+        return results;
+      } catch (parseError) {
+        console.error('[Perplexity] Failed to parse JSON, using text fallback:', parseError);
+        console.log('[Perplexity] Raw content:', content);
         // Fallback: extract titles from text response
-        return this.extractContentFromText(content);
+        const extracted = this.extractContentFromText(content);
+        console.log(`[Perplexity] Extracted ${extracted.length} titles from text`);
+        return extracted;
       }
     } catch (error) {
       console.error('Error searching for content:', error);
