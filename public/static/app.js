@@ -475,8 +475,36 @@ function searchForStream(title) {
   showNotification('Searching for free streams...', 'info');
 }
 
-// New function: Prompt user for stream URL
+// Category definitions
+const CATEGORIES = [
+  { value: 'tv-drama', label: 'TV Show - Drama', type: 'tv', genre: 'Drama' },
+  { value: 'tv-comedy', label: 'TV Show - Comedy', type: 'tv', genre: 'Comedy' },
+  { value: 'tv-action', label: 'TV Show - Action', type: 'tv', genre: 'Action' },
+  { value: 'tv-thriller', label: 'TV Show - Thriller', type: 'tv', genre: 'Thriller' },
+  { value: 'tv-documentary', label: 'TV Show - Documentary', type: 'tv', genre: 'Documentary' },
+  { value: 'movie-drama', label: 'Movie - Drama', type: 'movie', genre: 'Drama' },
+  { value: 'movie-comedy', label: 'Movie - Comedy', type: 'movie', genre: 'Comedy' },
+  { value: 'movie-action', label: 'Movie - Action', type: 'movie', genre: 'Action' },
+  { value: 'movie-thriller', label: 'Movie - Thriller', type: 'movie', genre: 'Thriller' },
+  { value: 'movie-crime', label: 'Movie - Crime', type: 'movie', genre: 'Crime' },
+  { value: 'movie-horror', label: 'Movie - Horror', type: 'movie', genre: 'Horror' },
+  { value: 'sports-ufc', label: 'Sports - UFC', type: 'sports', genre: 'UFC' },
+  { value: 'sports-football', label: 'Sports - Football', type: 'sports', genre: 'Football' },
+  { value: 'sports-basketball', label: 'Sports - Basketball', type: 'sports', genre: 'Basketball' }
+];
+
+// New function: Prompt user for stream URL with category selection
 async function promptForStreamUrl(content) {
+  // Auto-detect category if genre exists
+  let selectedCategory = '';
+  if (content.genre && content.type) {
+    const category = CATEGORIES.find(cat => 
+      cat.type === content.type && 
+      cat.genre.toLowerCase() === content.genre.toLowerCase()
+    );
+    if (category) selectedCategory = category.value;
+  }
+  
   // Create a modal for URL input
   const modalHtml = `
     <div id="url-input-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
@@ -487,18 +515,51 @@ async function promptForStreamUrl(content) {
         </h3>
         
         <p class="text-gray-400 text-sm mb-4">
-          Found a working stream? Paste the URL below:
+          Found a working stream? Paste the URL and select a category:
         </p>
         
-        <input 
-          type="url" 
-          id="stream-url-input" 
-          class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-red-600 focus:outline-none"
-          placeholder="https://..." 
-          value="${content.stream_url || ''}"
-        >
+        <!-- URL Input -->
+        <div class="mb-4">
+          <label class="block text-sm text-gray-400 mb-2">Stream URL</label>
+          <input 
+            type="url" 
+            id="stream-url-input" 
+            class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-red-600 focus:outline-none"
+            placeholder="https://..." 
+            value="${content.stream_url || ''}"
+          >
+        </div>
         
-        <div class="flex justify-end space-x-3 mt-6">
+        <!-- Category Dropdown -->
+        <div class="mb-6">
+          <label class="block text-sm text-gray-400 mb-2">
+            <i class="fas fa-tag mr-1"></i>
+            Category
+          </label>
+          <select 
+            id="category-select" 
+            class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:border-red-600 focus:outline-none"
+          >
+            <option value="">Select a category...</option>
+            <optgroup label="TV Shows">
+              ${CATEGORIES.filter(c => c.type === 'tv').map(cat => `
+                <option value="${cat.value}" ${cat.value === selectedCategory ? 'selected' : ''}>${cat.label}</option>
+              `).join('')}
+            </optgroup>
+            <optgroup label="Movies">
+              ${CATEGORIES.filter(c => c.type === 'movie').map(cat => `
+                <option value="${cat.value}" ${cat.value === selectedCategory ? 'selected' : ''}>${cat.label}</option>
+              `).join('')}
+            </optgroup>
+            <optgroup label="Sports">
+              ${CATEGORIES.filter(c => c.type === 'sports').map(cat => `
+                <option value="${cat.value}" ${cat.value === selectedCategory ? 'selected' : ''}>${cat.label}</option>
+              `).join('')}
+            </optgroup>
+          </select>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
           <button 
             onclick="closeUrlModal()" 
             class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition"
@@ -506,7 +567,7 @@ async function promptForStreamUrl(content) {
             Cancel
           </button>
           <button 
-            onclick="saveStreamUrl(${JSON.stringify(content).replace(/"/g, '&quot;')})" 
+            onclick="saveStreamUrlWithCategory(${JSON.stringify(content).replace(/"/g, '&quot;')})" 
             class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition font-semibold"
           >
             <i class="fas fa-save mr-2"></i>
@@ -536,27 +597,40 @@ function closeUrlModal() {
   }
 }
 
-// Save stream URL and add to library
-async function saveStreamUrl(content) {
+// Save stream URL with category and add to library
+async function saveStreamUrlWithCategory(content) {
   const urlInput = document.getElementById('stream-url-input');
+  const categorySelect = document.getElementById('category-select');
   const streamUrl = urlInput?.value.trim();
+  const categoryValue = categorySelect?.value;
   
   if (!streamUrl) {
     showNotification('Please enter a valid URL', 'error');
     return;
   }
   
+  if (!categoryValue) {
+    showNotification('Please select a category', 'error');
+    return;
+  }
+  
   // Close modal first
   closeUrlModal();
   
-  // Update content with URL
+  // Find the selected category details
+  const category = CATEGORIES.find(c => c.value === categoryValue);
+  
+  // Update content with URL, type, and genre from category
   content.stream_url = streamUrl;
   content.in_library = true;
+  content.type = category.type;
+  content.genre = category.genre;
+  content.category = categoryValue; // Store full category value
   
   // Save to library
   await addToLibrary(content, true);
   
-  showNotification(`Added "${content.title}" to library with stream URL!`, 'success');
+  showNotification(`Added "${content.title}" to ${category.label}!`, 'success');
   
   // Refresh the view
   await loadLibrary();
@@ -564,6 +638,11 @@ async function saveStreamUrl(content) {
   // Remove from recommendations if it was there
   recommendations = recommendations.filter(r => r.title !== content.title);
   renderRecommendations();
+}
+
+// Backward compatibility: Old function redirects to new one
+async function saveStreamUrl(content) {
+  return saveStreamUrlWithCategory(content);
 }
 
 // Search on multiple free streaming sites (keeping as backup)
@@ -635,14 +714,122 @@ function showSettings() {
   // TODO: Implement settings page
 }
 
-// Test movie button
-function testMovies() {
-  showNotification('TEST: Movies button works!', 'success');
+// Category Navigation Functions
+function showMoviesByGenre(genre) {
+  const filtered = libraryContent.filter(item => 
+    item.type === 'movie' && item.genre === genre
+  );
+  
+  renderCategoryView('Movies', genre, filtered);
 }
 
-// Test TV button
-function testTVShows() {
-  showNotification('TEST: TV Shows button works!', 'success');
+function showTVByGenre(genre) {
+  const filtered = libraryContent.filter(item => 
+    item.type === 'tv' && item.genre === genre
+  );
+  
+  renderCategoryView('TV Shows', genre, filtered);
+}
+
+function showSportsByType(sport) {
+  const filtered = libraryContent.filter(item => 
+    item.type === 'sports' && item.genre === sport
+  );
+  
+  renderCategoryView('Sports', sport, filtered);
+}
+
+function renderCategoryView(mainType, subType, content) {
+  const grid = document.getElementById('library-grid');
+  if (!grid) return;
+  
+  if (content.length === 0) {
+    grid.innerHTML = `
+      <div class="col-span-full text-center py-12">
+        <i class="fas fa-folder-open text-4xl text-gray-600 mb-4"></i>
+        <p class="text-gray-400">No ${subType} ${mainType.toLowerCase()} in your library yet</p>
+        <button onclick="generateGuide()" class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">
+          Discover Content
+        </button>
+      </div>
+    `;
+    return;
+  }
+  
+  // Separate by URL status
+  const withUrls = content.filter(item => item.stream_url && item.stream_url !== '');
+  const withoutUrls = content.filter(item => !item.stream_url || item.stream_url === '');
+  
+  let html = `
+    <div class="col-span-full mb-6">
+      <h2 class="text-3xl font-bold bg-gradient-to-r from-red-600 to-gray-400 bg-clip-text text-transparent">
+        <i class="fas fa-${mainType === 'Movies' ? 'film' : mainType === 'TV Shows' ? 'tv' : 'football'} mr-2"></i>
+        ${mainType} - ${subType}
+      </h2>
+      <p class="text-gray-400 mt-2">Showing ${content.length} item${content.length !== 1 ? 's' : ''}</p>
+    </div>
+  `;
+  
+  if (withUrls.length > 0) {
+    html += `
+      <div class="col-span-full mb-4">
+        <h3 class="text-lg font-bold text-green-600">
+          <i class="fas fa-check-circle mr-2"></i>
+          Ready to Watch (${withUrls.length})
+        </h3>
+      </div>
+      ${withUrls.map(item => createContentCard(item, true)).join('')}
+    `;
+  }
+  
+  if (withoutUrls.length > 0) {
+    html += `
+      <div class="col-span-full mb-4 ${withUrls.length > 0 ? 'mt-8' : ''}">
+        <h3 class="text-lg font-bold text-yellow-600">
+          <i class="fas fa-search mr-2"></i>
+          Need Stream URLs (${withoutUrls.length})
+        </h3>
+      </div>
+      ${withoutUrls.map(item => createContentCard(item, true)).join('')}
+    `;
+  }
+  
+  grid.innerHTML = html;
+}
+
+// Show all movies (any genre)
+function showMovies() {
+  const filtered = libraryContent.filter(item => item.type === 'movie');
+  renderCategoryView('Movies', 'All Genres', filtered);
+}
+
+// Show all TV shows (any genre)
+function showTVShows() {
+  const filtered = libraryContent.filter(item => item.type === 'tv');
+  renderCategoryView('TV Shows', 'All Genres', filtered);
+}
+
+// Show all sports
+function showSports() {
+  const filtered = libraryContent.filter(item => item.type === 'sports');
+  renderCategoryView('Sports', 'All Types', filtered);
+}
+
+// Show home/recommendations
+function showHome() {
+  const container = document.getElementById('content-container');
+  if (container) {
+    if (recommendations.length > 0) {
+      renderRecommendations();
+    } else {
+      showWelcome();
+    }
+  }
+}
+
+// Show library
+function showLibrary() {
+  renderLibrary();
 }
 
 // =====================================

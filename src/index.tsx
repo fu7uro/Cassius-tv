@@ -639,10 +639,64 @@ app.get('/', (c) => {
               <!-- Nav Links -->
               <div class="hidden md:flex items-center space-x-6">
                 <button class="hover:text-white transition" onclick="showHome()">Home</button>
-                <button class="hover:text-white transition text-blue-400" onclick="showMovies()">Movies</button>
-                <button class="hover:text-white transition text-purple-400" onclick="showTVShows()">TV Shows</button>
+                
+                <!-- Movies Dropdown -->
+                <div class="relative group">
+                  <button class="hover:text-white transition text-blue-400 flex items-center">
+                    Movies
+                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                  </button>
+                  <div class="absolute top-full left-0 mt-2 bg-gray-900 rounded-lg shadow-xl border border-gray-800 py-2 min-w-[200px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <button onclick="showMovies()" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">
+                      <i class="fas fa-film mr-2 text-blue-400"></i>All Movies
+                    </button>
+                    <div class="border-t border-gray-800 my-2"></div>
+                    <button onclick="showMoviesByGenre('Drama')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Drama</button>
+                    <button onclick="showMoviesByGenre('Comedy')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Comedy</button>
+                    <button onclick="showMoviesByGenre('Action')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Action</button>
+                    <button onclick="showMoviesByGenre('Thriller')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Thriller</button>
+                    <button onclick="showMoviesByGenre('Crime')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Crime</button>
+                    <button onclick="showMoviesByGenre('Horror')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Horror</button>
+                  </div>
+                </div>
+                
+                <!-- TV Shows Dropdown -->
+                <div class="relative group">
+                  <button class="hover:text-white transition text-purple-400 flex items-center">
+                    TV Shows
+                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                  </button>
+                  <div class="absolute top-full left-0 mt-2 bg-gray-900 rounded-lg shadow-xl border border-gray-800 py-2 min-w-[200px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <button onclick="showTVShows()" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">
+                      <i class="fas fa-tv mr-2 text-purple-400"></i>All TV Shows
+                    </button>
+                    <div class="border-t border-gray-800 my-2"></div>
+                    <button onclick="showTVByGenre('Drama')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Drama</button>
+                    <button onclick="showTVByGenre('Comedy')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Comedy</button>
+                    <button onclick="showTVByGenre('Action')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Action</button>
+                    <button onclick="showTVByGenre('Thriller')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Thriller</button>
+                    <button onclick="showTVByGenre('Documentary')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Documentary</button>
+                  </div>
+                </div>
+                
+                <!-- Sports Dropdown -->
+                <div class="relative group">
+                  <button class="hover:text-white transition text-orange-400 flex items-center">
+                    Sports
+                    <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                  </button>
+                  <div class="absolute top-full left-0 mt-2 bg-gray-900 rounded-lg shadow-xl border border-gray-800 py-2 min-w-[200px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <button onclick="showSports()" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">
+                      <i class="fas fa-football mr-2 text-orange-400"></i>All Sports
+                    </button>
+                    <div class="border-t border-gray-800 my-2"></div>
+                    <button onclick="showSportsByType('UFC')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">UFC</button>
+                    <button onclick="showSportsByType('Football')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Football</button>
+                    <button onclick="showSportsByType('Basketball')" class="block w-full text-left px-4 py-2 hover:bg-gray-800 transition">Basketball</button>
+                  </div>
+                </div>
+                
                 <button class="hover:text-white transition" onclick="showLibrary()">My Library</button>
-                <button class="hover:text-white transition" onclick="showCategories()">Categories</button>
               </div>
             </div>
             
