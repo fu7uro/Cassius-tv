@@ -24,17 +24,8 @@ app.use('/api/*', cors({
   allowHeaders: ['Content-Type', 'Authorization']
 }))
 
-// Serve static files from public directory
+// Serve static files from public directory (includes icons, manifest, app.js, etc.)
 app.use('/static/*', serveStatic({ root: './public' }))
-
-// Serve favicon and app icons
-app.use('/favicon.ico', serveStatic({ root: './public' }))
-app.use('/favicon-16x16.png', serveStatic({ root: './public' }))
-app.use('/favicon-32x32.png', serveStatic({ root: './public' }))
-app.use('/apple-touch-icon.png', serveStatic({ root: './public' }))
-app.use('/icon-192.png', serveStatic({ root: './public' }))
-app.use('/icon-512.png', serveStatic({ root: './public' }))
-app.use('/manifest.json', serveStatic({ root: './public' }))
 
 // ============================
 // API Routes
@@ -572,13 +563,13 @@ app.get('/', (c) => {
         <title>Cassius TV - Free Streaming Guide</title>
         
         <!-- Favicon and App Icons -->
-        <link rel="icon" type="image/x-icon" href="/favicon.ico">
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+        <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
         
         <!-- PWA Manifest -->
-        <link rel="manifest" href="/manifest.json">
+        <link rel="manifest" href="/static/manifest.json">
         
         <!-- iOS Meta Tags for Standalone App -->
         <meta name="apple-mobile-web-app-capable" content="yes">
