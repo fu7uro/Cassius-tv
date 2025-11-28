@@ -563,6 +563,28 @@ app.get('/', (c) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Cassius TV - Free Streaming Guide</title>
         
+        <!-- Favicon and App Icons -->
+        <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        
+        <!-- PWA Manifest -->
+        <link rel="manifest" href="/manifest.json">
+        
+        <!-- iOS Meta Tags for Standalone App -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="Cassius TV">
+        
+        <!-- Theme Colors -->
+        <meta name="theme-color" content="#dc2626">
+        <meta name="msapplication-TileColor" content="#dc2626">
+        
+        <!-- SEO Meta Tags -->
+        <meta name="description" content="Discover and organize free movies and TV shows from streaming platforms like Tubi, Plex, Crackle, and more.">
+        <meta name="keywords" content="free streaming, movies, tv shows, tubi, plex, crackle, free movies">
+        
         <!-- Tailwind CSS -->
         <script src="https://cdn.tailwindcss.com"></script>
         
