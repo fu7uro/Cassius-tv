@@ -869,21 +869,47 @@ app.get('/', (c) => {
                 <!-- Right Column -->
                 <div class="space-y-4">
                   <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-300">Poster Image URL</label>
-                    <input type="url" name="poster_url" placeholder="https://imagekit.io/..." 
-                           onchange="updatePosterPreview(this.value)"
-                           class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
-                    <div id="poster-preview" class="mt-2 w-32 h-48 bg-gray-800 rounded-lg flex items-center justify-center border border-gray-700">
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Poster Image</label>
+                    <input type="file" id="poster-image-upload" accept="image/*" 
+                           onchange="handleImageUpload(this)"
+                           class="hidden">
+                    <button type="button" onclick="document.getElementById('poster-image-upload').click()" 
+                            class="w-full px-4 py-3 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded-lg transition flex items-center justify-center">
+                      <i class="fas fa-upload mr-2"></i>
+                      Choose from Photos
+                    </button>
+                    <div id="poster-preview" class="mt-2 w-full h-48 bg-gray-800 rounded-lg flex items-center justify-center border border-gray-700 overflow-hidden">
                       <i class="fas fa-image text-3xl text-gray-600"></i>
                     </div>
+                    <input type="hidden" id="poster-data" name="poster_data" value="">
+                    <p class="text-xs text-gray-500 mt-1">Upload from your device's photo library</p>
                   </div>
                   
                   <div>
                     <label class="block text-sm font-medium mb-2 text-gray-300">Category *</label>
-                    <select name="category" required multiple size="4" class="w-full px-4 py-2 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
-                      <option value="">Loading categories...</option>
+                    <select name="category" required class="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent">
+                      <option value="">Select a category...</option>
+                      <optgroup label="TV Shows">
+                        <option value="tv-drama">TV Show - Drama</option>
+                        <option value="tv-comedy">TV Show - Comedy</option>
+                        <option value="tv-action">TV Show - Action</option>
+                        <option value="tv-thriller">TV Show - Thriller</option>
+                        <option value="tv-documentary">TV Show - Documentary</option>
+                      </optgroup>
+                      <optgroup label="Movies">
+                        <option value="movie-drama">Movie - Drama</option>
+                        <option value="movie-comedy">Movie - Comedy</option>
+                        <option value="movie-action">Movie - Action</option>
+                        <option value="movie-thriller">Movie - Thriller</option>
+                        <option value="movie-crime">Movie - Crime</option>
+                        <option value="movie-horror">Movie - Horror</option>
+                      </optgroup>
+                      <optgroup label="Sports">
+                        <option value="sports-ufc">Sports - UFC</option>
+                        <option value="sports-football">Sports - Football</option>
+                        <option value="sports-basketball">Sports - Basketball</option>
+                      </optgroup>
                     </select>
-                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
                   </div>
                 </div>
                 

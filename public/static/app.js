@@ -693,6 +693,12 @@ function showAddContent() {
   const modal = document.getElementById('add-content-modal');
   if (modal) {
     modal.classList.remove('hidden');
+    
+    // Setup form submission handler
+    const form = document.getElementById('add-content-form');
+    if (form) {
+      form.onsubmit = handleAddContentSubmit;
+    }
   }
 }
 
@@ -702,10 +708,104 @@ function closeAddContent() {
     modal.classList.add('hidden');
   }
   
-  // Reset form
+  // Reset form and preview
   const form = document.getElementById('add-content-form');
   if (form) {
     form.reset();
+  }
+  
+  const preview = document.getElementById('poster-preview');
+  if (preview) {
+    preview.innerHTML = '<i class="fas fa-image text-3xl text-gray-600"></i>';
+  }
+  
+  document.getElementById('poster-data').value = '';
+}
+
+// Handle image upload from device
+function handleImageUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  // Check file size (max 5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    showNotification('Image too large! Please choose an image under 5MB', 'error');
+    return;
+  }
+  
+  // Check file type
+  if (!file.type.startsWith('image/')) {
+    showNotification('Please select an image file', 'error');
+    return;
+  }
+  
+  const reader = new FileReader();
+  
+  reader.onload = function(e) {
+    const base64Data = e.target.result;
+    
+    // Store base64 data
+    document.getElementById('poster-data').value = base64Data;
+    
+    // Show preview
+    const preview = document.getElementById('poster-preview');
+    if (preview) {
+      preview.innerHTML = `<img src="${base64Data}" alt="Preview" class="w-full h-full object-cover">`;
+    }
+    
+    showNotification('Image loaded successfully!', 'success');
+  };
+  
+  reader.onerror = function() {
+    showNotification('Failed to load image', 'error');
+  };
+  
+  reader.readAsDataURL(file);
+}
+
+// Handle form submission
+async function handleAddContentSubmit(e) {
+  e.preventDefault();
+  
+  const formData = new FormData(e.target);
+  const categoryValue = formData.get('category');
+  
+  // Find category details
+  const category = CATEGORIES.find(c => c.value === categoryValue);
+  if (!category) {
+    showNotification('Please select a valid category', 'error');
+    return;
+  }
+  
+  // Build content object
+  const content = {
+    title: formData.get('title'),
+    type: category.type,
+    genre: category.genre,
+    category: categoryValue,
+    stream_url: formData.get('stream_url'),
+    release_year: formData.get('release_year') || null,
+    overview: formData.get('overview') || null,
+    poster_url: document.getElementById('poster-data').value || null,
+    in_library: true,
+    source: 'manual'
+  };
+  
+  console.log('Submitting content:', content);
+  
+  try {
+    const response = await axios.post(`${API_BASE}/api/library`, content);
+    
+    if (response.data.success) {
+      showNotification(`Added "${content.title}" to library!`, 'success');
+      closeAddContent();
+      await loadLibrary();
+    } else {
+      showNotification('Failed to add content', 'error');
+    }
+  } catch (error) {
+    console.error('Error adding content:', error);
+    showNotification('Failed to add content: ' + (error.response?.data?.error || error.message), 'error');
   }
 }
 
